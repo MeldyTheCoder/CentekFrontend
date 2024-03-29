@@ -1,0 +1,47 @@
+@import '../../Root.less';
+
+
+.shadow (@width: 0.5em, @spread: 0) {
+    & {
+      box-shadow: 0 0 @width @spread @shadow-color;
+    }
+}
+
+.AuthLayout {
+    position: relative;
+
+    .header {
+        background-color: transparent;
+    }
+
+    .content {
+        height: 80vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .content-wrapper {
+        display: block;
+        padding: 2rem;
+        border-radius: 0.5rem;
+        width: 25%;
+
+        opacity: 0;
+
+        background-color: rgb(255, 255, 255);
+        .shadow (@width: 0.5em, @spread: 0px);
+
+        &.show {
+            opacity: 1;
+            transition: opacity 1.2s;
+        }
+    }
+
+    .page-logo {
+        display: flex;
+        align-items: center;
+        flex-direction: row;
+        gap: 1rem;
+    }
+}

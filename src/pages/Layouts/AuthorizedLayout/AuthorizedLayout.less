@@ -1,0 +1,43 @@
+@import '../../Root.less';
+
+
+.shadow (@width: 0.5em, @spread: 0) {
+    & {
+      box-shadow: 0 0 @width @spread @shadow-color;
+    }
+}
+
+.AuthorizedLayout {
+    min-height: 100vh;
+
+    .content-skeleton {
+        display: flex;
+        gap: 3rem;
+        margin: 3rem 2rem 0rem 2rem;
+    }
+
+    .content-wrapper {
+        background-color: white;
+        min-height: 60vh;
+        border-radius: 0.5rem;
+        padding: 2rem;
+        width: auto;
+
+        .shadow (@width: 0.5em, @spread: 0px);
+    }
+
+    .sider {
+        background-color: white;
+        border-radius: 0.5rem;
+        width: 30rem !important;
+
+        .shadow (@width: 0.5em, @spread: 0px);
+    }
+
+    .footer {
+        margin-top: 3rem;
+        background-color: white;
+
+        .shadow (@width: 0.5em, @spread: 0px);
+    }
+}

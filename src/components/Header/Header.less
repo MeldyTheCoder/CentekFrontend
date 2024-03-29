@@ -1,0 +1,28 @@
+@import '../../pages/Root.less';
+
+
+.shadow (@width: 0.5em, @spread: 0) {
+    & {
+      box-shadow: 0 0 @width @spread @shadow-color;
+    }
+}
+
+.PageHeader {
+    background-color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3rem;
+
+    .shadow (@width: 0.5em, @spread: 0px);
+
+    .page-logo {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .search-bar {
+        max-width: 50%;
+    }
+}

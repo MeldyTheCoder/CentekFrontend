@@ -1,0 +1,78 @@
+@import './Root';
+
+.shadow (@width: 0.5em, @spread: 0) {
+    & {
+      box-shadow: 0 0 @width @spread @shadow-color;
+    }
+}
+
+.focus (@color) {
+    & {
+        transform: scale(1.0);
+        transition: color 0.2s;
+        color: @color
+    }
+
+    &:hover {
+        transform: scale(1.1);
+        transition: color 0.2s;
+        color: @color + 50%
+    }
+}
+
+
+.link-focus(@color) {
+    & {
+        font-size: 1em;
+        transition: font-size 0.2s, color 0.2s;
+        color: @color
+    }
+
+    &:hover {
+        font-size: 1.05em;
+        transition: font-size 0.2s, color 0.2s;
+        color: @color + 50%
+    }
+}
+
+.layout {
+    height: 100vh;
+}
+
+.logo {
+    margin-right: 2em;
+}
+
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    background-color: #ffffff;
+    
+    .shadow (@width: 0.5em, @spread: 0px);
+}
+
+.header-menu {
+    flex: 1;
+    min-width: 0;
+}
+
+.margin {
+    margin-top: 2em;
+}
+
+.content {
+    margin: 2em 2em 2em 2em;
+}
+
+.content-wrapper {
+    .shadow (@width: 0.5em, @spread: 0px);
+}
+
+.footer {
+    background-color: #ffffff;
+    .shadow (@width: 0.5em, @spread: 0px);
+}

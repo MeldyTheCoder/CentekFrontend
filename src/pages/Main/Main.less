@@ -1,0 +1,62 @@
+@import '../Root.less';
+
+.shadow (@width: 0.5em, @spread: 0) {
+    & {
+      box-shadow: 0 0 @width @spread @shadow-color;
+    }
+}
+
+
+.page-headings {
+    .content-wrapper {
+        position: relative;
+        display: flex;
+        justify-content: center;
+    }
+    
+    .about-us-content {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        margin-left: 0 3rem 0 3rem;
+        padding: 3rem 0 3rem 0;
+        border-radius: 0.5rem;
+        background-color: transparent;
+        flex-direction: row;
+    
+        &:nth-child(2n+1) {
+            background-color: rgb(218, 218, 218);
+            .shadow (@width: 0.5em, @spread: 0px);
+        }
+    
+        p {
+            font-size: 14px;
+        }
+    
+        .text-card {
+            display: flex;
+            flex-direction: column;
+            text-wrap: wrap;
+            max-width: 30%;
+    
+            h1 {
+                text-transform: uppercase;
+            }
+    
+            p {
+                font-size: 1.1rem;
+            }
+        }
+    
+        .text-image {
+            display: flex;
+            justify-content: center;
+            max-width: 50%;
+    
+            img {
+                max-width: 70%;
+                border-radius: 0.5rem;
+            }
+        }
+    }
+}
