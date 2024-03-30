@@ -5,9 +5,9 @@ import { Login } from './pages/Login/Login';
 import { Registration } from './pages/Registration/Registration';
 import { EmailConfirmation } from './pages/EmailConfirmation/EmailConfirmation';
 import { ProfileEditor } from './pages/ProfileEditor/ProfileEditor';
-import { ProfileSecurity } from './pages/ProfileSecurity/ProfileSecurity';
 import { Search } from './pages/Search/Search';
-
+import { RequiresAuth, RestrictAuthenticated } from './providers/AuthProvider';
+import { ActivateAccount } from './pages/UserActivate/UserActivate';
 
 export function ProjectRoutes() {
   return (
@@ -15,11 +15,12 @@ export function ProjectRoutes() {
       <Routes>
         <Route path='/' Component={Main}/>
         <Route path='/about-us/' Component={AboutUs}/>
-        <Route path='/login/' Component={Login} />
-        <Route path='/registration/' Component={Registration} />
+        <Route path='/login/' element={<RestrictAuthenticated><Login /></RestrictAuthenticated>} />
+        <Route path='/registration/' element={<RestrictAuthenticated><Registration /></RestrictAuthenticated>} />
         <Route path='/email-verification/' Component={EmailConfirmation} />
-        <Route path='/profile/' Component={ProfileEditor} />
+        <Route path='/profile/' element={<RequiresAuth><ProfileEditor /></RequiresAuth>} />
         <Route path='/search/' Component={Search} />
+        <Route path="/activate/:uid/:token/" element={<RestrictAuthenticated><ActivateAccount /></RestrictAuthenticated>} />
       </Routes>
     </BrowserRouter>
   );

@@ -1,15 +1,18 @@
 import { Avatar, Button, Menu, Layout, MenuProps, Tag, Segmented } from 'antd';
-import { UserRoles } from '../../../Types';
+import { TUser, UserRoles } from '../../../Types';
 import './ProfileLayout.less';
 import { AppstoreOutlined, BarChartOutlined, MailOutlined, SettingOutlined } from '@ant-design/icons';
 import { PageHeader } from '../../../components/Header/Header';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../providers/AuthProvider';
+import { useEffect } from 'react';
 
 const { Sider, Header, Footer, Content } = Layout; 
 
 interface IProfileLayout {
     children?: React.ReactElement | React.ReactElement[]
     selectedTab?: string;
+    userLoggedIn: TUser;
     onProfileClick?: () => any;
     onSearch?: (value: string) => any;
     onTabChange?: (value: string) => any;
@@ -33,10 +36,29 @@ const userRoleTags = {
 }
 
 
-export function ProfileLayout({children, selectedTab, onTabChange, onSearch, onProfileClick}: IProfileLayout) {
+export function ProfileLayout({
+    children, 
+    selectedTab, 
+    onTabChange, 
+    onSearch, 
+    onProfileClick, 
+    userLoggedIn
+}: IProfileLayout) {
+    const navigate = useNavigate();
+    const { logout } = useAuth();
 
     const handleLogout = () => {
-        console.log('logout');
+       logout().then(
+        () => navigate('/login/')
+       );
+    }
+
+    useEffect(() => {
+        console.log(userLoggedIn);
+    }, [userLoggedIn])
+
+    if (!userLoggedIn) {
+        return null
     }
 
     return (
@@ -49,9 +71,9 @@ export function ProfileLayout({children, selectedTab, onTabChange, onSearch, onP
                         <div className='user-avatar'>
                             <Avatar size={100}>S</Avatar>
                             <div className='user-name'>
-                                <h3>Кирилл Грошелев</h3>
+                                <h3>{`${userLoggedIn.first_name} ${userLoggedIn.last_name!}`}</h3>
                                 <div className='user-badges'>
-                                    <Tag {...userRoleTags[1]} />
+                                    <Tag {...userRoleTags[userLoggedIn.role || 3]} />
                                 </div>
                             </div>
                         </div>

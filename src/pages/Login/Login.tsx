@@ -1,16 +1,19 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AuthLayout } from "../Layouts/AuthLayout/AuthLayout";
 import { Form, Input, Checkbox, Button, Divider, App } from "antd";
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
 import { Formik } from "formik";
 import { LoginModel, TLoginModel } from "../../Types";
-import { useNavigate } from "react-router-dom";
-
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import { useAuth } from "../../providers/AuthProvider";
 import './Login.less';
+import { AxiosError } from "axios";
 
 export function Login() {
     const [loading, setLoading] = useState<boolean>(false);
+    const { getToken, authenticate } = useAuth();
     const { notification } = App.useApp();
+    const {loggedIn} = useAuth();
     const navigate = useNavigate();
 
     const handleAuthCredentialsError = () => {
@@ -35,8 +38,25 @@ export function Login() {
         setLoading(true);
 
         setTimeout(() => {
-            setLoading(false);
-            handleAuthCredentialsError();
+            getToken(data)
+                .then(
+                    (response: any) => {
+                        setLoading(false);
+                        authenticate(response.data.auth_token)
+                        return navigate('/profile/', {replace: true})
+                    }
+                )
+                .catch(
+                    (error: AxiosError) => {
+                        setLoading(false);
+
+                        if (error.response?.status === 400) {
+                            return handleAuthCredentialsError();
+                        }
+
+                        handleAuthUnknownError()
+                    }
+                )
         }, 2000)
     }
 
@@ -53,6 +73,10 @@ export function Login() {
 
         return undefined;
     }
+
+    if (!!loggedIn) {
+        return <Navigate to='/profile/' />
+    }
     
     return (
         <AuthLayout>
@@ -64,7 +88,7 @@ export function Login() {
             <Formik
                 validationSchema={LoginModel}
                 initialValues={{
-                    email: '',
+                    username: '',
                     password: ''
                 }}
                 onSubmit={handleSubmit}
@@ -77,16 +101,15 @@ export function Login() {
                         noValidate
                     >
                         <Form.Item 
-                            validateStatus={errorClass(values.email, errors.email)}
+                            validateStatus={errorClass(values.username, errors.username)}
                             hasFeedback
-                            help={errors.email}
+                            help={errors.username}
                         >
                             <Input 
                                 prefix={<UserOutlined className="site-form-item-icon" />} 
-                                placeholder="Эл. почта"
-                                type="email"
-                                name="email"
-                                value={values.email}
+                                placeholder="Имя пользователя"
+                                name="username"
+                                value={values.username}
                                 onChange={handleChange}
                             />
                         </Form.Item>

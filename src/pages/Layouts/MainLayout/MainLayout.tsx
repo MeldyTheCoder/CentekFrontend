@@ -1,6 +1,7 @@
 import { Avatar, Button, Divider, Layout, Flex, Card, Statistic, Col, Space, Dropdown } from 'antd';
 import './MainLayout.less';
 import { DownOutlined, GithubOutlined, LikeOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 
 
 const { Header, Footer, Content, Sider } = Layout;
@@ -31,6 +32,8 @@ export function MainLayout({
     onKaifiniClick,
     onPricesClick
 }: IMainLayout) {
+    const navigate = useNavigate();
+
     const menuItems = [
         <a>Главная</a>,
         <a onClick={onPricesClick}>Цены</a>,
@@ -87,7 +90,7 @@ export function MainLayout({
                             <h2>Centek - бесплатные консультации от врачей.</h2>
                             <p>Бесплатные консультации от проверенных врачей с реальными отзывами.</p>
 
-                            <Button>
+                            <Button onClick={() => navigate('/login/')}>
                                 Начать консультацию
                             </Button>
                         </div>

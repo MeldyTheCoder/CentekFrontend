@@ -62,18 +62,11 @@ export function Search() {
                 <Checkbox value={2}>Офтальмолог</Checkbox>
                 <Checkbox value={3}>Мастур Макс</Checkbox>
                 <Checkbox value={4}>Костолом</Checkbox>
-                <Checkbox value={5}>Максим Строев</Checkbox>
-                <Checkbox value={6}>Максим Строев</Checkbox>
-                <Checkbox value={7}>Максим Строев</Checkbox>
-                <Checkbox value={8}>Максим Строев</Checkbox>
-                <Checkbox value={9}>Максим Строев</Checkbox>
-                <Checkbox value={10}>Максим Строев</Checkbox>
-                <Checkbox value={11}>Максим Строев</Checkbox>
-                <Checkbox value={12}>Максим Строев</Checkbox>
-                <Checkbox value={13}>Максим Строев</Checkbox>
-                <Checkbox value={14}>Максим Строев</Checkbox>
-                <Checkbox value={15}>Максим Строев</Checkbox>
-                <Checkbox value={16}>Максим Строев</Checkbox>
+                <Checkbox value={5}>Проктолог</Checkbox>
+                <Checkbox value={6}>Стоматолог</Checkbox>
+                <Checkbox value={7}>Терапевт</Checkbox>
+                <Checkbox value={8}>Космонавт</Checkbox>
+                <Checkbox value={9}>Летчик</Checkbox>
 
             </Checkbox.Group>
         </>
@@ -135,7 +128,12 @@ export function Search() {
             
             <Divider />
 
-            <DoctorList doctors={[]} />
+            <DoctorList 
+                doctors={[]} 
+                selectedRatingRange={selectedRatingRange} 
+                selectedSpecialties={selectedSpecialties}
+                searchString={searchString!}
+            />
         </div>
     </AuthorizedLayout>
 }

@@ -49,6 +49,10 @@ export const User = yup.object({
         ),
 
     last_name: yup.string().notRequired(),
+    
+    username: yup.string().required(
+        'Поле имени пользователя обязательно для заполнения.'
+    ),
 
     email: yup.string()
         .required(
@@ -68,7 +72,8 @@ export const User = yup.object({
     role: oneOfEnum<UserRoles>(
         (UserRoles as any)
     ),
-
+    
+    avatar: yup.string().notRequired(),
     date_joined: yup.date().notRequired(),
     
     last_login: yup.date().notRequired(),
@@ -183,14 +188,9 @@ export const Review = yup.object({
 
 
 export const LoginModel = yup.object({
-    email: yup.string()
+    username: yup.string()
         .required(
             'Данное поле обязательно для заполнения.'
-        )
-        .test(
-            'email-validation',
-            'Указан неверный адрес эл.почты.',
-            emailTestFunction
         ),
     password: yup.string().required(
         'Данное поле обязательно для заполнения.'
@@ -198,6 +198,10 @@ export const LoginModel = yup.object({
 })
 
 export const RegistrationModel = yup.object({
+    username: yup.string().required(
+        'Данное поле обязательно для заполнения.'
+    ),
+
     email: yup.string()
         .required(
             'Данное поле обязательно для заполнения.'

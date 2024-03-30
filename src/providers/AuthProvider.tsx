@@ -5,6 +5,7 @@ import { json } from 'stream/consumers';
 import { AxiosError } from 'axios';
 import { log } from 'console';
 import { Navigate } from 'react-router-dom';
+import { wait } from '@testing-library/user-event/dist/utils';
 
 const AuthContext = createContext<any>(null);
 
@@ -33,19 +34,31 @@ export function RequiresAuth({children}: IAuthProvider) {
         return <Navigate to='/login/' />
     }
 
-    return children
+    return <>
+        {children}
+    </>
 }
 
+export function RestrictAuthenticated({children}: IAuthProvider) {
+    const { loggedIn } = useAuth();
+
+    if (loggedIn) {
+        return <Navigate to='/profile/' />
+    }
+
+    return <>
+        {children}
+    </>
+}
 export function AuthProvider ({children}: IAuthProvider) {
     const [loggedIn, setLoggedIn] = useState<boolean>(false);
-    const [userData, setUserData] = useState<TUser>();
 
-    function saveToLocalStorage(tokenData: any) {
-        localStorage.setItem('site', JSON.stringify(tokenData))
+    function saveToLocalStorage(token: string) {
+        localStorage.setItem('site', token)
     }
 
     function getFromLocalStorage() {
-        return JSON.parse(localStorage.getItem('site')!);
+        return localStorage.getItem('site')
     }
 
     function clearLocalStorage() {
@@ -53,51 +66,50 @@ export function AuthProvider ({children}: IAuthProvider) {
     }
 
     async function getMe() {
-        const token = getFromLocalStorage()?.token
+        const token = getFromLocalStorage()
         
         return await fetchApi<any, TUser>({
-            url: 'http://localhost:8000/me/',
+            url: 'api/v1/authenticated_users/',
             method: HttpMethods.GET,
+            headers: {
+                'Authorization': `Token ${token}`
+            }
         })
+    }
+
+    async function validateToken() {
+        try {
+            const response = await getMe();
+            return true;
+        } catch (error) {
+            return false;
+        }
     }
 
     async function getToken(data: TLoginModel) {
         return await fetchApi<TLoginModel, TUser>({
-            url: 'token/',
+            url: 'auth/token/login',
             method: HttpMethods.POST,
-            data: data
+            data: data,
+            headers: {}
         })
     }
 
-    async function authenticate(data: any) {
-        saveToLocalStorage(data);
-        setLoggedIn(true);
-        
-        getMe()
-            .then(
-                (response: TUser) => {
-                    setUserData(response)
-                }
-            )
-            .catch(
-                (_: AxiosError) => {
-                    logout()
-                }
-            )       
+    function authenticate(token: string) {
+        saveToLocalStorage(token);
     }
 
     async function registration(data: TRegistrationModel) {
         return await fetchApi<TRegistrationModel, TUser>({
-            url: 'registration/',
+            url: 'auth/users/',
             method: HttpMethods.POST,
             data: data
         })
     }
 
     async function logout() {
-        clearLocalStorage();
         setLoggedIn(false);
-        setUserData(undefined);
+        clearLocalStorage();
 
     }
 
@@ -106,33 +118,28 @@ export function AuthProvider ({children}: IAuthProvider) {
 
         if (!localData) {
             logout();
-            return;
+        
+        } else {
+            setLoggedIn(true);
+
+            validateToken().then(
+                (isValid: boolean) => {
+                    if (!isValid) {
+                        logout()
+                    }
+                }
+            )
         }
-
-        const intervalId = setInterval(() => {
-            getMe()
-                .catch(
-                    (_: AxiosError) => {
-                       logout()
-                    }
-                )
-                .then(
-                    (response: any) => {
-                        setLoggedIn(true);
-                        setUserData(response);
-                    }
-                )
-        }, 5000) 
-
-        return () => clearInterval(intervalId)
+       
     }, [])
 
     return (
         <AuthContext.Provider value={{
             getToken,
             registration,
+            authenticate,
+            logout,
             loggedIn,
-            userData
         }}>
             {children}
         </AuthContext.Provider>

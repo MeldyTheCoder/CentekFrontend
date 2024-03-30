@@ -4,16 +4,9 @@ import { CheckCircleOutlined, EditOutlined, LockOutlined, MailOutlined, ProfileO
 import './ProfileEditor.less';
 import { useEffect, useState } from "react";
 import { TUser, UserRoles } from "../../Types";
+import { RequiresAuth, useAuth } from "../../providers/AuthProvider";
+import { useApiContext } from "../../providers/ApiProvider";
 
-const user: TUser = {
-    id: 1,
-    email: 'cool.groshelev@mail.ru',
-    first_name: 'Кирилл',
-    last_name: 'Грошелев',
-    date_joined: new Date('2024-03-24'),
-    role: UserRoles.USER,
-    password: '',
-}
 
 const userRoleString = (role: UserRoles) => {
     if (role === UserRoles.DOCTOR) {
@@ -25,32 +18,27 @@ const userRoleString = (role: UserRoles) => {
     }
 }
 
-const statisticItems = (userData: TUser): DescriptionsProps['items'] => (
-    [
-        {
-          key: '1',
-          label: 'Дата регистрации',
-          children: userData.date_joined?.toDateString() || '-',
-        },
-        {
-          key: '2',
-          label: 'Дата последнего входа',
-          children: userData.last_login?.toDateString() || '-',
-        },
-        {
-          key: '3',
-          label: 'Роль',
-          children: userRoleString(user.role!),
-        },
-    ]
-)
 
 export function ProfileEditor() {
     const [firstName, setFirstName] = useState<string>('')
     const [lastName, setLastName] = useState<string>('')
     const [email, setEmail] = useState<string>('')
+    const { loggedIn } = useAuth()
+    const { useMe } = useApiContext()
+    const [user, userIsLoading] = useMe();
+
+    console.log(loggedIn);
 
     const [selectedTab, setSelectedTab] = useState<string>('editor');
+
+    
+    if (userIsLoading || !user) {
+        return null
+    }
+
+    function formatDate(date: string) {
+        return new Date(date).toLocaleDateString("en-US")
+    }
 
     const handleFirstNameChange = ({target}: any) => {
         setFirstName(target.value);
@@ -65,7 +53,7 @@ export function ProfileEditor() {
     }
 
     const emailChangeDisabled = (): boolean => {
-        const dateDiff = new Date().getUTCDay() - user.date_joined!.getUTCDay()
+        const dateDiff = new Date().getUTCDay() - new Date((user?.date_joined as string)).getUTCDate()
 
         return (dateDiff < (1 * 3));
     }
@@ -94,7 +82,6 @@ export function ProfileEditor() {
                     <Input.Search
                         className="input"
                         defaultValue={user.email}
-                        value={email}
                         onChange={handleEmailChange}
                         disabled={emailChangeDisabledValue}
                         prefix={
@@ -114,10 +101,8 @@ export function ProfileEditor() {
                 <Col sm={6}>
                     <Input
                         className="input"
-                        defaultValue={user.first_name}
-                        value={firstName}
+                        defaultValue={user.first_name!}
                         onChange={handleFirstNameChange}
-                        disabled={emailChangeDisabledValue}
                         prefix={
                             <ProfileOutlined className="site-form-item-icon" />
                         } 
@@ -129,9 +114,7 @@ export function ProfileEditor() {
                     <Input
                         className="input"
                         defaultValue={user.last_name!}
-                        value={lastName}
                         onChange={handleLastNameChange}
-                        disabled={emailChangeDisabledValue}
                         prefix={
                             <ProfileOutlined className="site-form-item-icon" />
                         } 
@@ -139,7 +122,7 @@ export function ProfileEditor() {
                     />
                 </Col>
 
-                <Button type="primary" disabled={!firstName}>Сменить</Button>
+                <Button type="primary">Сменить</Button>
             </div>
         </>
     )
@@ -220,7 +203,24 @@ export function ProfileEditor() {
             <Divider />
 
             <div className="page-controls center">
-                <Descriptions title="" items={statisticItems(user)}/>
+                <Descriptions title="" items={[
+                        {
+                            key: '1',
+                            label: 'Дата регистрации',
+                            children:formatDate(user.date_joined!) || '-',
+                        },
+                        {
+                            key: '2',
+                            label: 'Дата последнего входа',
+                            children: formatDate(user.last_login!) || '-',
+                        },
+                        {
+                            key: '3',
+                            label: 'Роль',
+                            children: userRoleString(user.role!),
+                        },
+                    ]}
+                />
             </div>
         </>
     )
@@ -238,7 +238,7 @@ export function ProfileEditor() {
     }
 
     return (
-        <ProfileLayout selectedTab={selectedTab} onTabChange={handleTabChange}>
+        <ProfileLayout selectedTab={selectedTab} onTabChange={handleTabChange} userLoggedIn={user}>
             <div className="ProfileEmail">
                 {(renderContent() as any)}
             </div>

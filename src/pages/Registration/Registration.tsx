@@ -1,23 +1,62 @@
 import { useState } from "react";
 import { AuthLayout } from "../Layouts/AuthLayout/AuthLayout";
-import { Form, Input, Checkbox, Button, Divider } from "antd";
+import { Form, Input, Checkbox, Button, Divider, App } from "antd";
 import { LockOutlined, ProfileOutlined, UserOutlined } from "@ant-design/icons";
 import { Formik } from "formik";
 import { RegistrationModel, TRegistrationModel } from "../../Types";
 
 import './Registration.less';
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../providers/AuthProvider";
+import { error } from "console";
+import { AxiosError } from "axios";
 
 export function Registration() {
     const [loading, setLoading] = useState<boolean>(false);
-    const navigate = useNavigate()
+    const { notification } = App.useApp();
+    const { registration } = useAuth();
+    const navigate = useNavigate();
+
+    const handleRegistrationCredentialsError = () => {
+        notification.error({
+            message: 'Ошибка регистрации',
+            description: 'Данный пользователь уже зарегистрирован.',
+            placement: 'top',
+            duration: 5
+        })
+    }
+
+    const handleRegistrationUnknownError = () => {
+        notification.error({
+            message: 'Ошибка регистрации',
+            description: 'Повторите попытку позднее.',
+            placement: 'top',
+            duration: 5
+        })
+    }
 
     const handleFormSubmit = (data: TRegistrationModel) => {
         setLoading(true);
 
         setTimeout(() => {
-            setLoading(false);
-            navigate('/email-verification/')
+            registration(data)
+                .then(
+                    (response: any) => {
+                        console.log(response.data);
+                        setLoading(false);
+                        navigate('/email-verification/')
+                    }
+                )
+                .catch(
+                    (error: AxiosError) => {
+                        setLoading(false);
+                        if (error.response?.status === 400) {
+                            return handleRegistrationCredentialsError()
+                        }
+
+                        handleRegistrationUnknownError()
+                    }
+                )
         }, 2000)
     }
 
@@ -47,6 +86,7 @@ export function Registration() {
             <Formik
                 validationSchema={RegistrationModel}
                 initialValues={{
+                    username: '',
                     email: '',
                     password: '',
                     password_repeat: '',
@@ -63,11 +103,25 @@ export function Registration() {
                         noValidate
                     >
                         <Form.Item 
+                            validateStatus={errorClass(values.username, errors.username, touched.username)}
+                            hasFeedback
+                            help={errors.username}
+                        >
+                            <Input 
+                                prefix={<UserOutlined className="site-form-item-icon" />} 
+                                placeholder="Имя пользователя"
+                                name="username"
+                                value={values.username}
+                                onChange={handleChange}
+                            />
+                        </Form.Item>
+
+                        <Form.Item 
                             validateStatus={errorClass(values.email, errors.email, touched.email)}
                             hasFeedback
                             help={errors.email}
                         >
-                            <Input 
+                            <Input
                                 prefix={<UserOutlined className="site-form-item-icon" />} 
                                 placeholder="Эл. почта"
                                 type="email"

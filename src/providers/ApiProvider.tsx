@@ -39,20 +39,13 @@ export function useApiContext() {
 }
 
 const api = axios.create({
-    baseURL: 'http://localhost:8000/api/',
-    withCredentials: true,
+    baseURL: 'http://localhost:8000/',
+    withCredentials: false,
 })
 
 const getToken = () => {
-    return JSON.parse(localStorage.getItem('token')!)
+    return localStorage.getItem('site')
 }
-
-function authorizationIntercepter(config: any) {
-    config.headers.Authorization = `Bearer ${getToken()}`;
-    return config;
-}
-
-api.interceptors.request.use(authorizationIntercepter)
 
 export function fetchApi<Request, Response>(options: TFetchOptions<Request>): ResponseType<Response> {
     return api<any, Response, Request>(options)
@@ -68,8 +61,8 @@ export function ApiProvider({children}: IApiProvider) {
         function pollUpdates() {
             fetchApi<Request, Response>(options)
                 .then(
-                    (response: Response) => {
-                        setData(response);
+                    (response: any) => {
+                        setData(response.data);
                         setLoading(false);
                     }
                 )
@@ -94,9 +87,19 @@ export function ApiProvider({children}: IApiProvider) {
         return [data, loading]
     }
 
+    function useMe() {
+        return useRequest<any, TUser>({
+            url: 'api/v1/authenticated_users',
+            method: HttpMethods.GET,
+            headers: {
+                'Authorization': `Token ${getToken()}`
+            }
+        })
+    }
+
     function useLogin(options: TLoginModel) {
         return useRequest<TLoginModel, TUser>({
-            url: 'token/',
+            url: 'auth/token/login',
             method: HttpMethods.POST,
             data: options
         })
@@ -104,7 +107,7 @@ export function ApiProvider({children}: IApiProvider) {
 
     function useRegistration(options: TRegistrationModel) {
         return useRequest<TRegistrationModel, TUser>({
-            url: 'registration/',
+            url: 'api/v1/auth/users/',
             method: HttpMethods.POST,
             data: options
         })
@@ -112,7 +115,7 @@ export function ApiProvider({children}: IApiProvider) {
 
     function useDoctors(options: ModelOptionsType<TDoctor>) {
         return useRequest<ModelOptionsType<TDoctor>, TDoctor[]>({
-            url: 'doctors/',
+            url: 'api/v1/doctors/',
             method: HttpMethods.GET,
             data: options,
         })
@@ -120,14 +123,14 @@ export function ApiProvider({children}: IApiProvider) {
 
     function useDoctor(doctorId: number) {
         return useRequest<any, TDoctor>({
-            url: `doctors/${doctorId}`,
+            url: `api/v1/doctors/${doctorId}`,
             method: HttpMethods.GET,
         })
     }
 
     function useSpecialties(options: ModelOptionsType<TSpecialty>) {
         return useRequest<ModelOptionsType<TSpecialty>, TSpecialty[]>({
-            url: 'specialties/',
+            url: 'api/v1/specialities/',
             method: HttpMethods.GET,
             data: options
         })
@@ -135,14 +138,14 @@ export function ApiProvider({children}: IApiProvider) {
 
     function useSpecialty(specialtyId: number) {
         return useRequest<any, TSpecialty>({
-            url: `specialties/${specialtyId}`,
+            url: `api/v1/specialities/${specialtyId}`,
             method: HttpMethods.GET
         })
     }
 
     function useReviews(options: ModelOptionsType<TReview>) {
         return useRequest<ModelOptionsType<TReview>, TReview[]>({
-            url: 'reviews/',
+            url: 'api/v1/reviews/',
             method: HttpMethods.GET,
             data: options
         })
@@ -150,6 +153,7 @@ export function ApiProvider({children}: IApiProvider) {
 
     return (
         <ApiContext.Provider value={{
+            useMe,
             useDoctor,
             useDoctors,
             useSpecialties,
