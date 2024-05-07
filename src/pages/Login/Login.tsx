@@ -3,7 +3,7 @@ import { AuthLayout } from "../Layouts/AuthLayout/AuthLayout";
 import { Form, Input, Checkbox, Button, Divider, App } from "antd";
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
 import { Formik } from "formik";
-import { LoginModel, TLoginModel } from "../../Types";
+import { LoginModel, TLoginModel, TUser } from "../../Types";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../../providers/AuthProvider";
 import './Login.less';
@@ -11,9 +11,8 @@ import { AxiosError } from "axios";
 
 export function Login() {
     const [loading, setLoading] = useState<boolean>(false);
-    const { getToken, authenticate } = useAuth();
+    const { signIn, isAuthenticated, authorize } = useAuth();
     const { notification } = App.useApp();
-    const {loggedIn} = useAuth();
     const navigate = useNavigate();
 
     const handleAuthCredentialsError = () => {
@@ -38,16 +37,24 @@ export function Login() {
         setLoading(true);
 
         setTimeout(() => {
-            getToken(data)
+            authorize(data)
                 .then(
-                    (response: any) => {
+                    ({authToken, userData, refreshToken}) => {
+                        console.log('authToken: ', authToken);
+                        console.log('refreshToken: ', refreshToken);
+                        
                         setLoading(false);
-                        authenticate(response.data.auth_token)
-                        return navigate('/profile/', {replace: true})
+                        if (!!signIn(authToken, userData, refreshToken)) {
+                            return navigate('/profile/', {replace: true})
+                        }
+
+                        return handleAuthUnknownError();
                     }
                 )
                 .catch(
                     (error: AxiosError) => {
+                        console.log('Error: ', error);
+
                         setLoading(false);
 
                         if (error.response?.status === 400) {
@@ -74,10 +81,6 @@ export function Login() {
         return undefined;
     }
 
-    if (!!loggedIn) {
-        return <Navigate to='/profile/' />
-    }
-    
     return (
         <AuthLayout>
             <div className="form-bio">

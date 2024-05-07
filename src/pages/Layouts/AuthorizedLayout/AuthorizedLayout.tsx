@@ -9,13 +9,14 @@ import { StringDecoder } from "string_decoder";
 interface IAuthorizedLayout {
     children: React.ReactElement | React.ReactElement[];
     siderContent?: React.ReactElement | React.ReactElement[];
+    onSearch?: (value: string) => any | void;
 }
 
-export function AuthorizedLayout({children, siderContent}: IAuthorizedLayout) {
+export function AuthorizedLayout({children, siderContent, onSearch}: IAuthorizedLayout) {
     const navigate = useNavigate();
     
     const handleSearch = (value: string) => {
-        navigate(`/search/?q=${value}`);
+        !!onSearch && onSearch?.(value);
     };
 
     const handleProfileClick = () => {

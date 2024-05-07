@@ -20,6 +20,7 @@ export function ActivateAccount() {
 
             return navigate('/login/');
         } catch (error) {
+            console.log(error);
             return <p>Ошибка активации аккаунта</p>
         } 
     }

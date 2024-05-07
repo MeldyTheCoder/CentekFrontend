@@ -2,6 +2,9 @@ import axios, { AxiosError, AxiosHeaders, AxiosRequestConfig } from 'axios';
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { TDoctor, TLoginModel, TReview, TSpecialty, TUser, TRegistrationModel } from '../Types';
 
+// @ts-ignore
+import Cookies from 'js-cookie';
+
 export const enum HttpMethods {
     GET = 'get',
     POST = 'post',
@@ -43,12 +46,27 @@ const api = axios.create({
     withCredentials: false,
 })
 
-const getToken = () => {
-    return localStorage.getItem('site')
-}
+api.interceptors.request.use(
+    (config) => {
+        const token: string = Cookies.get('_auth')
 
-export function fetchApi<Request, Response>(options: TFetchOptions<Request>): ResponseType<Response> {
-    return api<any, Response, Request>(options)
+        if (!!token) {
+            config.headers.Authorization = `Bearer ${token}`
+        }
+
+        return config
+    },
+    (error) => {
+        console.log('Interceptor Error: ', error);
+    }
+)
+
+export async function fetchApi<Request extends any, Response extends any>(
+    options: TFetchOptions<Request>
+): Promise<Response> {
+    const response = await api.request<any, Response, Request>(options);
+
+    return (response as any).data;
 }
 
 export function ApiProvider({children}: IApiProvider) {
@@ -62,7 +80,7 @@ export function ApiProvider({children}: IApiProvider) {
             fetchApi<Request, Response>(options)
                 .then(
                     (response: any) => {
-                        setData(response.data);
+                        setData(response);
                         setLoading(false);
                     }
                 )
@@ -91,9 +109,6 @@ export function ApiProvider({children}: IApiProvider) {
         return useRequest<any, TUser>({
             url: 'api/v1/authenticated_users',
             method: HttpMethods.GET,
-            headers: {
-                'Authorization': `Token ${getToken()}`
-            }
         })
     }
 

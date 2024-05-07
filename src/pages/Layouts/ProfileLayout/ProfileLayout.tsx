@@ -5,7 +5,6 @@ import { AppstoreOutlined, BarChartOutlined, MailOutlined, SettingOutlined } fro
 import { PageHeader } from '../../../components/Header/Header';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../providers/AuthProvider';
-import { useEffect } from 'react';
 
 const { Sider, Header, Footer, Content } = Layout; 
 
@@ -41,23 +40,17 @@ export function ProfileLayout({
     selectedTab, 
     onTabChange, 
     onSearch, 
-    onProfileClick, 
-    userLoggedIn
+    onProfileClick,
 }: IProfileLayout) {
     const navigate = useNavigate();
-    const { logout } = useAuth();
+    const { signOut, isAuthenticated, user } = useAuth();
 
     const handleLogout = () => {
-       logout().then(
-        () => navigate('/login/')
-       );
+       signOut()
+       navigate('/login/')
     }
 
-    useEffect(() => {
-        console.log(userLoggedIn);
-    }, [userLoggedIn])
-
-    if (!userLoggedIn) {
+    if (!isAuthenticated || !user) {
         return null
     }
 
@@ -71,9 +64,9 @@ export function ProfileLayout({
                         <div className='user-avatar'>
                             <Avatar size={100}>S</Avatar>
                             <div className='user-name'>
-                                <h3>{`${userLoggedIn.first_name} ${userLoggedIn.last_name!}`}</h3>
+                                <h3>{`${user.first_name} ${user.last_name!}`}</h3>
                                 <div className='user-badges'>
-                                    <Tag {...userRoleTags[userLoggedIn.role || 3]} />
+                                    <Tag {...userRoleTags[user.role || 3]} />
                                 </div>
                             </div>
                         </div>

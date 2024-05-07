@@ -4,7 +4,7 @@ import { CheckCircleOutlined, EditOutlined, LockOutlined, MailOutlined, ProfileO
 import './ProfileEditor.less';
 import { useEffect, useState } from "react";
 import { TUser, UserRoles } from "../../Types";
-import { RequiresAuth, useAuth } from "../../providers/AuthProvider";
+import { useAuth } from "../../providers/AuthProvider";
 import { useApiContext } from "../../providers/ApiProvider";
 
 
@@ -23,20 +23,15 @@ export function ProfileEditor() {
     const [firstName, setFirstName] = useState<string>('')
     const [lastName, setLastName] = useState<string>('')
     const [email, setEmail] = useState<string>('')
-    const { loggedIn } = useAuth()
-    const { useMe } = useApiContext()
-    const [user, userIsLoading] = useMe();
-
-    console.log(loggedIn);
+    const { isAuthenticated, user } = useAuth()
 
     const [selectedTab, setSelectedTab] = useState<string>('editor');
 
-    
-    if (userIsLoading || !user) {
-        return null
-    }
+    function formatDate(date: string | Date) {
+        if (!(typeof date === "string")) {
+            return date?.toLocaleDateString("en-US");
+        }
 
-    function formatDate(date: string) {
         return new Date(date).toLocaleDateString("en-US")
     }
 
@@ -53,7 +48,15 @@ export function ProfileEditor() {
     }
 
     const emailChangeDisabled = (): boolean => {
-        const dateDiff = new Date().getUTCDay() - new Date((user?.date_joined as string)).getUTCDate()
+        let date: Date;
+
+        if (typeof user?.date_joined === "string") {
+            date = new Date(user?.date_joined);
+        } else {
+            date = user?.date_joined || new Date();
+        }
+
+        const dateDiff = new Date().getUTCDay() - new Date(date).getUTCDate()
 
         return (dateDiff < (1 * 3));
     }
@@ -81,7 +84,7 @@ export function ProfileEditor() {
                 <Col sm={6}>
                     <Input.Search
                         className="input"
-                        defaultValue={user.email}
+                        defaultValue={user?.email}
                         onChange={handleEmailChange}
                         disabled={emailChangeDisabledValue}
                         prefix={
@@ -101,7 +104,7 @@ export function ProfileEditor() {
                 <Col sm={6}>
                     <Input
                         className="input"
-                        defaultValue={user.first_name!}
+                        defaultValue={user?.first_name!}
                         onChange={handleFirstNameChange}
                         prefix={
                             <ProfileOutlined className="site-form-item-icon" />
@@ -113,7 +116,7 @@ export function ProfileEditor() {
                 <Col sm={6}>
                     <Input
                         className="input"
-                        defaultValue={user.last_name!}
+                        defaultValue={user?.last_name!}
                         onChange={handleLastNameChange}
                         prefix={
                             <ProfileOutlined className="site-form-item-icon" />
@@ -207,17 +210,17 @@ export function ProfileEditor() {
                         {
                             key: '1',
                             label: 'Дата регистрации',
-                            children:formatDate(user.date_joined!) || '-',
+                            children:formatDate(user?.date_joined!) || '-',
                         },
                         {
                             key: '2',
                             label: 'Дата последнего входа',
-                            children: formatDate(user.last_login!) || '-',
+                            children: formatDate(user?.last_login!) || '-',
                         },
                         {
                             key: '3',
                             label: 'Роль',
-                            children: userRoleString(user.role!),
+                            children: userRoleString(user?.role!),
                         },
                     ]}
                 />
@@ -238,7 +241,7 @@ export function ProfileEditor() {
     }
 
     return (
-        <ProfileLayout selectedTab={selectedTab} onTabChange={handleTabChange} userLoggedIn={user}>
+        <ProfileLayout selectedTab={selectedTab} onTabChange={handleTabChange} userLoggedIn={user!}>
             <div className="ProfileEmail">
                 {(renderContent() as any)}
             </div>

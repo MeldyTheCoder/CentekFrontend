@@ -1,13 +1,14 @@
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { AuthorizedLayout } from "../Layouts/AuthorizedLayout/AuthorizedLayout";
 import { DoctorList } from "../../components/DoctorList/DoctorList";
 import { Menu, MenuProps, Collapse, Slider, Checkbox, Divider, Alert } from "antd";
 import { AppstoreOutlined, MailOutlined, SearchOutlined, SettingOutlined } from "@ant-design/icons";
 import { useState } from "react";
 
-import './Search.less';
+import './Doctors.less';
 
-export function Search() {
+export function Doctors() {
+    const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const searchString = searchParams.get('q');
 
@@ -29,6 +30,14 @@ export function Search() {
     const handleWorkExperienceChange = (value: any[]) => {
         console.log('Work Experience: ', value);
         setSelectedWorkExperience(value);
+    }
+
+    const handleSearch = (value: string) => {
+        if (!value) {
+            return navigate('/doctors/')
+        }
+        
+        return navigate(`/doctors/?q=${value}`)
     }
 
     const ratingFilter = (
@@ -117,16 +126,21 @@ export function Search() {
         />
     );
 
-    return <AuthorizedLayout siderContent={siderContent}>
+    return <AuthorizedLayout siderContent={siderContent} onSearch={handleSearch}>
         <div className="Search">
-            <Alert
-                message={<h4>Найдено по результатам запроса: <code>{searchString}</code></h4>}
-                type="info"
-                showIcon
-                icon={<SearchOutlined />}
-            />
-            
-            <Divider />
+            {!!searchString && (
+                <>
+                    <Alert
+                        message={<h4>Найдено по результатам запроса: <code>{searchString}</code></h4>}
+                        type="info"
+                        showIcon
+                        icon={<SearchOutlined />}
+                    />
+                    
+                    <Divider />
+                </>
+                )
+            }
 
             <DoctorList 
                 doctors={[]} 

@@ -1,9 +1,9 @@
 import React from 'react';
-import { Avatar, Space, List, App, Button} from 'antd';
+import { Avatar, Space, List, App, Button, Divider, Typography} from 'antd';
 import { TDoctor, TReview, TUser, UserRoles } from '../../Types';
 import { MessageOutlined, StarOutlined } from '@ant-design/icons';
 import { ReviewList } from '../ReviewList/ReviewList';
-import { reverse } from 'dns';
+import './DoctorList.less';
 
 interface IDoctorList {
     doctors: TDoctor[],
@@ -11,11 +11,12 @@ interface IDoctorList {
     selectedWorkExperience?: number[],
     selectedSpecialties?: number[],
     searchString?: string,
+    loading?: boolean,
 
 }
 
-const IconText = ({ icon, text, onHover }: { icon: React.FC; text: string, onHover?: () => any }) => (
-    <div className='icon-text' onClick={onHover}>
+const IconText = ({ icon, text, onHover, className }: { icon: React.FC; text: string, onHover?: () => any, className?: string }) => (
+    <div className={`icon-text ${className}`} onClick={onHover}>
         <Space>
             {React.createElement(icon)}
             {text}
@@ -126,20 +127,57 @@ const reviews = (doctor: TDoctor): TReview[] => (
         },
     ]
 )
+const DoctorProfileModal = ({children, doctor}: {children: React.ReactElement | string, doctor: TDoctor}) => (
+    <>
+        <div className='doctor-review-profile'>
+            <Avatar size={64}>D</Avatar>
+
+            <div className='profile-row'>
+                <p>{`${doctor.first_name} ${doctor.last_name.at(0)}. ${doctor.surname?.at(0)}.`}</p>
+                <Typography.Text type='secondary'>{doctor.specialty.name}</Typography.Text>
+            </div>
+
+        </div>
+
+        <Divider></Divider>
+
+        {children}
+    </>
+)
 
 export function DoctorList({
     doctors, 
     selectedRatingRange, 
     selectedSpecialties, 
     selectedWorkExperience,
-    searchString
+    searchString,
+    loading
 }: IDoctorList) {
     const { modal } = App.useApp();
 
     const handleReviewsHover = (doctor: TDoctor) => {
         return modal.info({
-            title: 'Отзывы доктора',
-            content: <ReviewList reviews={reviews(doctor)} />
+            title: ``,
+            closable: true,
+            footer: null,
+            icon: null,
+            className: 'ReviewsModal',
+            content: <DoctorProfileModal doctor={doctor}>
+                <ReviewList reviews={reviews(doctor)} />
+            </DoctorProfileModal>
+        })
+    };
+
+    const handleRatingHover = (doctor: TDoctor) => {
+        return modal.info({
+            title: ``,
+            closable: true,
+            footer: null,
+            icon: null,
+            className: 'ReviewsModal',
+            content: <DoctorProfileModal doctor={doctor}>
+                У данного доктора рейтинг выше среднего.
+            </DoctorProfileModal>
         })
     };
 
@@ -167,6 +205,7 @@ export function DoctorList({
 
     return (
         <List
+            className='DoctorList'
             itemLayout="vertical"
             size="large"
             pagination={{
@@ -178,7 +217,10 @@ export function DoctorList({
                 <List.Item
                     key={item.id}
                     actions={[
-                        <IconText icon={StarOutlined} text="4.3" key="list-vertical-star-o" />,
+                        <Button type='text' onClick={() => handleRatingHover(item)}>
+                            <IconText icon={StarOutlined} text="4.3" key="list-vertical-star-o"/>
+                        </Button>,
+
                         <Button type='text' onClick={() => handleReviewsHover(item)}>
                             <IconText icon={MessageOutlined} text="2" key="list-vertical-message" />    
                         </Button>

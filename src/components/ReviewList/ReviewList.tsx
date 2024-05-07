@@ -13,8 +13,8 @@ export function ReviewList({reviews}: IReviewList) {
             className="review-list"
             dataSource={reviews}
             pagination={{
-                pageSize: 5,
-                align: 'start'
+                pageSize: 3,
+                align: 'center'
             }}
             renderItem={(item: TReview) => (
                 <List.Item>
