@@ -36,15 +36,16 @@ export function Login() {
     const handleSubmit = (data: TLoginModel) => {
         setLoading(true);
 
+        console.log(data);
+
         setTimeout(() => {
             authorize(data)
                 .then(
-                    ({authToken, userData, refreshToken}) => {
+                    ({authToken, userData}) => {
                         console.log('authToken: ', authToken);
-                        console.log('refreshToken: ', refreshToken);
                         
                         setLoading(false);
-                        if (!!signIn(authToken, userData, refreshToken)) {
+                        if (!!signIn(authToken, userData)) {
                             return navigate('/profile/', {replace: true})
                         }
 
@@ -60,7 +61,8 @@ export function Login() {
                         if (error.response?.status === 400) {
                             return handleAuthCredentialsError();
                         }
-
+                        
+                        console.log(error);
                         handleAuthUnknownError()
                     }
                 )

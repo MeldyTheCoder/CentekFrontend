@@ -1,16 +1,23 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AuthorizedLayout } from "../Layouts/AuthorizedLayout/AuthorizedLayout";
 import { DoctorList } from "../../components/DoctorList/DoctorList";
-import { Menu, MenuProps, Collapse, Slider, Checkbox, Divider, Alert } from "antd";
+import { Menu, MenuProps, Collapse, Slider, Checkbox, Divider, Alert, App } from "antd";
 import { AppstoreOutlined, MailOutlined, SearchOutlined, SettingOutlined } from "@ant-design/icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import './Doctors.less';
+import { useApiContext } from "../../providers/ApiProvider";
+import { TSpeciality } from "../../Types";
 
 export function Doctors() {
     const navigate = useNavigate();
+    const { notification } = App.useApp();
     const [searchParams, setSearchParams] = useSearchParams();
     const searchString = searchParams.get('q');
+
+    const { useDoctors, useSpecialities } = useApiContext();
+    const [doctors, doctorsLoading, doctorsError] = useDoctors();
+    const [specialities, spetialitiesLoading, specError] = useSpecialities();
 
     const [selectedSpecialties, setSelectedSpecialties] = useState<number[]>([])
     const [selectedWorkExperience, setSelectedWorkExperience] = useState<number[]>([])
@@ -40,6 +47,7 @@ export function Doctors() {
         return navigate(`/doctors/?q=${value}`)
     }
 
+
     const ratingFilter = (
         <>
             <Slider 
@@ -67,15 +75,9 @@ export function Doctors() {
                 onChange={handleSpecialtyFilterChange} 
                 className="scrollable-group"
             >
-                <Checkbox value={1}>Лор</Checkbox>
-                <Checkbox value={2}>Офтальмолог</Checkbox>
-                <Checkbox value={3}>Мастур Макс</Checkbox>
-                <Checkbox value={4}>Костолом</Checkbox>
-                <Checkbox value={5}>Проктолог</Checkbox>
-                <Checkbox value={6}>Стоматолог</Checkbox>
-                <Checkbox value={7}>Терапевт</Checkbox>
-                <Checkbox value={8}>Космонавт</Checkbox>
-                <Checkbox value={9}>Летчик</Checkbox>
+                {specialities?.map((element: TSpeciality) => (
+                    <Checkbox value={element.id}>{element.name}</Checkbox>
+                ))}
 
             </Checkbox.Group>
         </>
@@ -126,6 +128,20 @@ export function Doctors() {
         />
     );
 
+    useEffect(() => {
+        if (!doctorsError && !specError) {
+            return
+        }
+        const error = doctorsError || specError;
+
+        return notification.error({
+            message: 'Ошибка',
+            description: error.toString(),
+            duration: 5,
+            placement: 'topRight',
+        })
+    }, [doctorsError, specError])
+
     return <AuthorizedLayout siderContent={siderContent} onSearch={handleSearch}>
         <div className="Search">
             {!!searchString && (
@@ -143,10 +159,11 @@ export function Doctors() {
             }
 
             <DoctorList 
-                doctors={[]} 
+                doctors={doctors} 
                 selectedRatingRange={selectedRatingRange} 
                 selectedSpecialties={selectedSpecialties}
                 searchString={searchString!}
+                loading={doctorsLoading}
             />
         </div>
     </AuthorizedLayout>

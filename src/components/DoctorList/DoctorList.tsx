@@ -1,12 +1,20 @@
 import React from 'react';
-import { Avatar, Space, List, App, Button, Divider, Typography} from 'antd';
-import { TDoctor, TReview, TUser, UserRoles } from '../../Types';
-import { MessageOutlined, StarOutlined } from '@ant-design/icons';
-import { ReviewList } from '../ReviewList/ReviewList';
+import { Avatar, Space, List, App, Button, Divider, Typography, Tooltip, Badge, Flex, ButtonProps, Tag} from 'antd';
+import { TUser } from '../../Types';
+import { EyeOutlined, FileSyncOutlined, MessageOutlined, SoundOutlined, StarOutlined, TeamOutlined } from '@ant-design/icons';
 import './DoctorList.less';
+import { useApiContext } from '../../providers/ApiProvider';
+import { fromDate, toRGB } from '../../DateUtils';
+import { useNavigate } from 'react-router-dom';
+import { DoctorProfileModal } from '../DoctorProfileModal/DoctorProfileModal';
+import { DoctorComplaintModal } from '../DoctorComplaint/DoctorComplaintModal';
+import Item from 'antd/es/list/Item';
+import { DoctorVisitsModal } from '../DoctorVisitsModal/DoctorVisitsModal';
+import { DoctorMeetingsModal } from '../DoctorMeetingsModal/DoctorMeetingsModal';
+import { useAuth } from '../../providers/AuthProvider';
 
 interface IDoctorList {
-    doctors: TDoctor[],
+    doctors: TUser[],
     selectedRatingRange?: [number, number],
     selectedWorkExperience?: number[],
     selectedSpecialties?: number[],
@@ -24,126 +32,15 @@ const IconText = ({ icon, text, onHover, className }: { icon: React.FC; text: st
     </div>
 );
 
-const specialty = {
-    id: 1,
-    name: 'Лор'
+
+function DoctorWriteMessage({doctor}: {doctor: TUser}) {
+
+    return (
+        <DoctorProfileModal doctor={doctor}>
+            <Badge color='red' text={'К сожалению, эта функция недоступна в данный момент.'} />
+        </DoctorProfileModal>
+    )
 }
-
-
-const user: TUser = {
-    id: 1,
-    username: 'Sunday',
-    first_name: 'Кирилл',
-    last_name: 'Грошелев',
-    password: 'ergergerg',
-    role: UserRoles.USER,
-    email: 'cool.groshelev@mail.ru'
-}
-
-const data: TDoctor[] = [
-    {
-        id: 1,
-        first_name: `Максимка`,
-        last_name: 'Строев',
-        surname: 'Скумбрия',
-        user: user,
-        specialty: specialty,
-        description: 'Бросил гранату, убил 50 человек, а потом она взорвалась.',
-    },
-
-    {
-        id: 2,
-        first_name: `Махик`,
-        last_name: 'Строев',
-        surname: 'Айболитович',
-        user: user,
-        specialty: specialty,
-        description: 'Хорошие курсы проктолога. Геморой вылечу за 2 приема. Первый - проход в ноги. ',
-    },
-
-    {
-        id: 3,
-        first_name: `Шуберт`,
-        last_name: 'Энштейн',
-        user: user,
-        specialty: specialty,
-        description: 'Охранник рынка единственный, кто следит за базаром.',
-    },
-
-    {
-        id: 4,
-        first_name: `Стас`,
-        last_name: 'Какашкин',
-        user: user,
-        specialty: specialty,
-        description: 'Чем богаче дача - джими-джими ача-ача.',
-    },
-];
-
-
-const reviews = (doctor: TDoctor): TReview[] => (
-    [
-        {
-            id: 1,
-            from_user: user,
-            to_doctor: doctor,
-            message: 'Хороший врач!',
-            rate: 4.5,
-        },
-        {
-            id: 1,
-            from_user: user,
-            to_doctor: doctor,
-            message: 'Хороший врач!',
-            rate: 4.5,
-        },
-        {
-            id: 1,
-            from_user: user,
-            to_doctor: doctor,
-            message: 'Хороший врач!',
-            rate: 4.5,
-        },
-        {
-            id: 1,
-            from_user: user,
-            to_doctor: doctor,
-            message: 'Хороший врач!',
-            rate: 4.5,
-        },
-        {
-            id: 1,
-            from_user: user,
-            to_doctor: doctor,
-            message: 'Хороший врач!',
-            rate: 4.5,
-        },
-        {
-            id: 1,
-            from_user: user,
-            to_doctor: doctor,
-            message: 'Хороший врач!',
-            rate: 4.5,
-        },
-    ]
-)
-const DoctorProfileModal = ({children, doctor}: {children: React.ReactElement | string, doctor: TDoctor}) => (
-    <>
-        <div className='doctor-review-profile'>
-            <Avatar size={64}>D</Avatar>
-
-            <div className='profile-row'>
-                <p>{`${doctor.first_name} ${doctor.last_name.at(0)}. ${doctor.surname?.at(0)}.`}</p>
-                <Typography.Text type='secondary'>{doctor.specialty.name}</Typography.Text>
-            </div>
-
-        </div>
-
-        <Divider></Divider>
-
-        {children}
-    </>
-)
 
 export function DoctorList({
     doctors, 
@@ -153,39 +50,36 @@ export function DoctorList({
     searchString,
     loading
 }: IDoctorList) {
-    const { modal } = App.useApp();
+    const { user } = useAuth();
+    const { modal, message } = App.useApp();
 
-    const handleReviewsHover = (doctor: TDoctor) => {
+    const handleMeetingsClick = (doctor: TUser) => {
         return modal.info({
             title: ``,
             closable: true,
             footer: null,
             icon: null,
             className: 'ReviewsModal',
-            content: <DoctorProfileModal doctor={doctor}>
-                <ReviewList reviews={reviews(doctor)} />
-            </DoctorProfileModal>
+            content: <DoctorMeetingsModal doctor={doctor} />
         })
     };
 
-    const handleRatingHover = (doctor: TDoctor) => {
+    const handleVisitsClick = (doctor: TUser) => {
         return modal.info({
             title: ``,
             closable: true,
             footer: null,
             icon: null,
             className: 'ReviewsModal',
-            content: <DoctorProfileModal doctor={doctor}>
-                У данного доктора рейтинг выше среднего.
-            </DoctorProfileModal>
+            content: <DoctorVisitsModal doctor={doctor} />
         })
     };
 
-    let dataFiltered = [...data]
+    let dataFiltered = doctors?.length > 0 ? [...doctors] : []
 
     if (!!searchString) {
         dataFiltered = dataFiltered.filter((element: any) => (
-            `${element.first_name} ${element.last_name} ${element.surname_name} ${element.specialty.name}`.includes(
+            `${element.first_name} ${element.last_name} ${element.surname_name} ${element.speciality?.name}`.includes(
                 searchString
             )
         ))
@@ -199,8 +93,43 @@ export function DoctorList({
 
     if (!!selectedSpecialties && selectedSpecialties.length > 0) {
         dataFiltered = dataFiltered.filter((element: any) => (
-            selectedSpecialties.includes(element.specialty.id)
+            selectedSpecialties.includes(element.speciality?.id)
         ))
+    }
+
+    const handleDoctorWriteButtonClicked = (doctor: TUser) => {
+        const handleModalClose = (destroy: () => void) => {
+            destroy?.();
+        }
+
+        const {destroy} = modal.info({
+            title: '',
+            closable: true,
+            footer: null,
+            icon: null,
+            className: 'ReviewsModal',
+            content: <DoctorWriteMessage doctor={doctor} />
+        })
+    }
+
+    const handleDoctorComplaintButtonClicked = (doctor: TUser) => {
+        const handleModalClose = (destroy?: () => void) => {
+            destroy?.();
+
+            return message.success(
+                'Жалоба успешно отправлена.',
+                5,
+            )
+        }
+
+        const {destroy} = modal.info({
+            title: ``,
+            closable: true,
+            footer: null,
+            icon: null,
+            className: 'ReviewsModal',
+            content: <DoctorComplaintModal doctor={doctor} onSubmit={() => handleModalClose(destroy)}/>,
+        })
     }
 
     return (
@@ -212,26 +141,74 @@ export function DoctorList({
                 pageSize: 3,
                 align: 'center'
             }}
+            loading={loading}
             dataSource={dataFiltered}
             renderItem={(item) => (
                 <List.Item
                     key={item.id}
                     actions={[
-                        <Button type='text' onClick={() => handleRatingHover(item)}>
-                            <IconText icon={StarOutlined} text="4.3" key="list-vertical-star-o"/>
-                        </Button>,
+                        <Tooltip 
+                            title='Количество сеансов для пациентов у данного доктора за все время.'
+                            placement='bottom'
+                        >
+                            <Button type='text' onClick={() => handleVisitsClick(item)}>
+                                <IconText icon={FileSyncOutlined} text={`${item.visits?.length || 0}`} key="list-vertical-star-o"/>
+                            </Button>
+                        </Tooltip>
+                        ,
 
-                        <Button type='text' onClick={() => handleReviewsHover(item)}>
-                            <IconText icon={MessageOutlined} text="2" key="list-vertical-message" />    
-                        </Button>
+                        <Tooltip
+                            title='Количество мероприятий, организованных данным доктором.'
+                            placement='bottom'
+                        >
+                            <Button type='text' onClick={() => handleMeetingsClick(item)}>
+                                <IconText icon={TeamOutlined} text={`${item.meetings?.length || 0}`} key="list-vertical-message" />    
+                            </Button>
+                        </Tooltip>
                     ]}
+
+                    extra={
+                        user?.id !== item.id && 
+                        <Flex gap={10} align='center' wrap='wrap' vertical>
+                            <Button
+                                type='default'
+                                icon={<MessageOutlined />}
+                                onClick={() => handleDoctorWriteButtonClicked(item)}
+                                block
+                            >
+                                Написать
+                            </Button>
+
+                            <Button
+                                type='dashed'
+                                icon={<SoundOutlined />}
+                                onClick={() => handleDoctorComplaintButtonClicked(item)}
+                                danger
+                                block
+                            >
+                                Пожаловаться
+                            </Button>
+                        </Flex>
+                    }
                 >
                     <List.Item.Meta
-                        avatar={<Avatar src={item.user.avatar} size={60}>{item.first_name.at(0)}</Avatar>}
-                        title={<a href={`/doctors/${item.id}`}>{item.last_name} {item.first_name} {item.surname!}</a>}
-                        description={item.specialty.name}
+                        avatar={<Avatar src={`http://localhost:8080/${item.photo}`} size={60}>{item.first_name.at(0)}</Avatar>}
+                        title={
+                            <>
+                                <a href={`/doctors/${item.id}`}>
+                                    {item.last_name} {item.first_name} {item.surname!}
+                                </a>
+
+                                {user?.id === item.id && (
+                                    <Tag color='magenta'>
+                                        Вы
+                                    </Tag>
+                                )}
+                            </>
+                        }
+                        description={<Badge color={toRGB(item.speciality.name)} text={item.speciality?.name} />}
                     />
-                        {item.description}
+
                 </List.Item>
             )}
         />

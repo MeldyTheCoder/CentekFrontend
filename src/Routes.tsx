@@ -10,6 +10,9 @@ import { RestrictAuthenticated } from './providers/AuthProvider';
 import { ActivateAccount } from './pages/UserActivate/UserActivate';
 import RequireAuth from '@auth-kit/react-router/RequireAuth'
 import { Pacients } from './pages/Pacients/Pacients';
+import { Doctor } from './pages/Doctor/Doctor';
+import { PatientRecordPage } from './pages/PatientRecordPage/PatientRecordPage';
+import { NewPatient } from './pages/NewPatient/NewPatient';
 
 const Authorized = ({children}: any) => (
   <RequireAuth fallbackPath='/login/'>
@@ -31,9 +34,27 @@ const ADoctors = () => (
   </Authorized>
 )
 
-const APacients = () => (
+const APatients = () => (
   <Authorized>
     <Pacients />
+  </Authorized>
+)
+
+const ADoctor = () => (
+  <Authorized>
+    <Doctor />
+  </Authorized>
+)
+
+const APatientRecord = () => (
+  <Authorized>
+    <PatientRecordPage />
+  </Authorized>
+)
+
+const ANewPatient = () => (
+  <Authorized>
+    <NewPatient />
   </Authorized>
 )
 
@@ -68,7 +89,10 @@ export function ProjectRoutes() {
         <Route path='/profile/' Component={AProfileEditor} />
         <Route path='/doctors/' Component={ADoctors} />
         <Route path="/activate/:uid/:token/" Component={RActivateAccount} />
-        <Route path='/pacients/' Component={APacients} />
+        <Route path='/patients/' Component={APatients} />
+        <Route path='/patients/new' Component={ANewPatient} />
+        <Route path='/doctors/:id/' Component={ADoctor} />
+        <Route path='/visits/' Component={APatientRecord} />
       </Routes>
     </BrowserRouter>
   );

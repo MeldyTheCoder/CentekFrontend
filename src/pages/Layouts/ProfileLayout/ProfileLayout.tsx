@@ -1,10 +1,11 @@
-import { Avatar, Button, Menu, Layout, MenuProps, Tag, Segmented } from 'antd';
+import { Avatar, Button, Menu, Layout, MenuProps, Tag, Segmented, TagProps } from 'antd';
 import { TUser, UserRoles } from '../../../Types';
 import './ProfileLayout.less';
 import { AppstoreOutlined, BarChartOutlined, MailOutlined, SettingOutlined } from '@ant-design/icons';
 import { PageHeader } from '../../../components/Header/Header';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../providers/AuthProvider';
+import { UploadAvatar } from '../../../components/UploadAvatar/UploadAvatar';
 
 const { Sider, Header, Footer, Content } = Layout; 
 
@@ -17,23 +18,10 @@ interface IProfileLayout {
     onTabChange?: (value: string) => any;
 }
 
-const userRoleTags = {
-    1: {
-        children: 'доктор',
-        color: 'cyan',
-    },
-
-    2: {
-        children: 'администратор',
-        color: 'volcano',
-    },
-
-    3: {
-        children: 'пользователь',
-        color: 'blue',
-    }
-}
-
+const userRoleTag = ({
+    children: 'доктор',
+    color: 'cyan'
+})
 
 export function ProfileLayout({
     children, 
@@ -62,11 +50,17 @@ export function ProfileLayout({
                 <div className='user-section'>
                     <div className='user-info'>
                         <div className='user-avatar'>
-                            <Avatar size={100}>S</Avatar>
+                            <UploadAvatar
+                                size={100}
+                                src={`http://localhost:8080/${user?.photo}`}
+                            >
+                                    {user.first_name.at(0)}
+                            </UploadAvatar>
+
                             <div className='user-name'>
-                                <h3>{`${user.first_name} ${user.last_name!}`}</h3>
+                                <h3>{user.first_name} {user.last_name} {user.surname!}</h3>
                                 <div className='user-badges'>
-                                    <Tag {...userRoleTags[user.role || 3]} />
+                                    <Tag {...userRoleTag} />
                                 </div>
                             </div>
                         </div>

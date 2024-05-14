@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { AuthLayout } from "../Layouts/AuthLayout/AuthLayout";
 import { Form, Input, Checkbox, Button, Divider, App } from "antd";
-import { LockOutlined, ProfileOutlined, UserOutlined } from "@ant-design/icons";
+import { LockOutlined, ProfileOutlined, SlidersOutlined, UserOutlined } from "@ant-design/icons";
 import { Formik } from "formik";
 import { RegistrationModel, TRegistrationModel } from "../../Types";
 
@@ -91,15 +91,20 @@ export function Registration() {
                     password: '',
                     password_repeat: '',
                     first_name: '',
-                    last_name: ''
+                    last_name: '',
+                    speciality: {
+                        name: 'Специальность'
+                    }
                 }}
                 onSubmit={handleFormSubmit}
             >
                {({errors, touched, values, handleChange, handleSubmit}) => (
                     <Form
-                        name="normal_login"
                         className="registration-form"
-                        onFinish={handleSubmit}
+                        onFinish={(valuesData) => {
+                            console.log(errors);
+                            handleSubmit(valuesData)
+                        }}
                         noValidate
                     >
                         <Form.Item 
@@ -110,8 +115,8 @@ export function Registration() {
                             <Input 
                                 prefix={<UserOutlined className="site-form-item-icon" />} 
                                 placeholder="Имя пользователя"
-                                name="username"
                                 value={values.username}
+                                name='username'
                                 onChange={handleChange}
                             />
                         </Form.Item>
@@ -125,7 +130,7 @@ export function Registration() {
                                 prefix={<UserOutlined className="site-form-item-icon" />} 
                                 placeholder="Эл. почта"
                                 type="email"
-                                name="email"
+                                name='email'
                                 value={values.email}
                                 onChange={handleChange}
                             />
@@ -139,7 +144,7 @@ export function Registration() {
                             <Input 
                                 prefix={<ProfileOutlined className="site-form-item-icon" />} 
                                 placeholder="Имя"
-                                name="first_name"
+                                name='first_name'
                                 value={values.first_name}
                                 onChange={handleChange}
                             />
@@ -153,7 +158,7 @@ export function Registration() {
                             <Input 
                                 prefix={<ProfileOutlined className="site-form-item-icon" />} 
                                 placeholder="Фамилия"
-                                name="last_name"
+                                name='last_name'
                                 value={values.last_name}
                                 onChange={handleChange}
                             />
@@ -162,11 +167,12 @@ export function Registration() {
                         <Form.Item 
                             validateStatus={errorClass(values.password, errors.password, touched.password)}
                             help={(!!values.password && !!touched.password) && errors.password}
+                            hasFeedback
                         >
                             <Input.Password
                                 prefix={<LockOutlined className="site-form-item-icon" />}
                                 type="password"
-                                name="password"
+                                name='password'
                                 placeholder="Пароль"
                                 value={values.password}
                                 onChange={handleChange}
@@ -176,13 +182,28 @@ export function Registration() {
                         <Form.Item 
                             validateStatus={errorClass(values.password_repeat, errors.password_repeat, touched.password_repeat)}
                             help={(!!values.password_repeat && !!touched.password_repeat) && errors.password_repeat}
+                            hasFeedback
                         >
                             <Input.Password
                                 prefix={<LockOutlined className="site-form-item-icon" />}
                                 type="password"
-                                name="password_repeat"
+                                name='password_repeat'
                                 placeholder="Повтор пароля"
                                 value={values.password_repeat}
+                                onChange={handleChange}
+                            />
+                        </Form.Item>
+
+                        <Form.Item 
+                            validateStatus={errorClass(values.speciality?.name, errors.speciality?.name, touched.speciality?.name)}
+                            help={(!!values.speciality?.name && !!touched.speciality?.name) && errors.speciality?.name}
+                            hasFeedback
+                        >
+                            <Input
+                                name='speciality.name'
+                                prefix={<SlidersOutlined />}
+                                placeholder="Специальность"
+                                value={values.speciality?.name}
                                 onChange={handleChange}
                             />
                         </Form.Item>

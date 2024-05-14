@@ -1,9 +1,22 @@
 import axios, { AxiosError, AxiosHeaders, AxiosRequestConfig } from 'axios';
 import React, { useState, useEffect, createContext, useContext } from 'react';
-import { TDoctor, TLoginModel, TReview, TSpecialty, TUser, TRegistrationModel } from '../Types';
+import { 
+    TLoginModel, 
+    TUser, 
+    TRegistrationModel, 
+    TSpeciality, 
+    TVisit, 
+    TDiagnosis, 
+    TPatient, 
+    TInsuranceCompany, 
+    TMeeting,
+    TCreatePatient,
+    TCreateMeeting
+} from '../Types';
 
 // @ts-ignore
 import Cookies from 'js-cookie';
+import { error } from 'console';
 
 export const enum HttpMethods {
     GET = 'get',
@@ -41,14 +54,19 @@ export function useApiContext() {
     return context;
 }
 
+export const getToken = () => {
+    const token: string = Cookies.get('_auth')
+    return token
+}
+
 const api = axios.create({
-    baseURL: 'http://localhost:8000/',
+    baseURL: 'http://localhost:8080/',
     withCredentials: false,
 })
 
 api.interceptors.request.use(
     (config) => {
-        const token: string = Cookies.get('_auth')
+        const token: string = getToken();
 
         if (!!token) {
             config.headers.Authorization = `Bearer ${token}`
@@ -70,11 +88,10 @@ export async function fetchApi<Request extends any, Response extends any>(
 }
 
 export function ApiProvider({children}: IApiProvider) {
-    const POLLING_INTERVAL = 4000;
-
-    function useRequest<Request, Response>(options: TFetchOptions<Request>): [Response | undefined, boolean] {
+    function useRequest<Request, Response>(options: TFetchOptions<Request>): [Response | undefined, boolean, string | undefined] {
         const [loading, setLoading] = useState<boolean>(true);
         const [data, setData] = useState<Response>();
+        const [error, setError] = useState<string>();
 
         function pollUpdates() {
             fetchApi<Request, Response>(options)
@@ -85,8 +102,9 @@ export function ApiProvider({children}: IApiProvider) {
                     }
                 )
                 .catch(
-                    (error: AxiosError) => {
+                    (error: AxiosError<any, any>) => {
                         setLoading(false);
+                        setError(error.response?.data?.detail || error.message)
                         console.log(error)
                     }
                 )
@@ -94,86 +112,184 @@ export function ApiProvider({children}: IApiProvider) {
 
         useEffect(() => {
             pollUpdates()
-
-            const intervalId = setInterval(() => {
-                pollUpdates()
-            }, POLLING_INTERVAL)
-
-            return () => clearInterval(intervalId)
         }, [])
 
-        return [data, loading]
+        return [data, loading, error]
+    }
+
+    async function handledRequest<Request, Response>(options: TFetchOptions<Request>): Promise<[Response | null, string | null]> {
+        try {
+            const response = await fetchApi<Request, Response>(options);
+            return [response, null];
+        } catch (error: any) {
+            const errorMessage: string = error.response?.data?.detail! || error.message! || 'Произошла неизвестная ошибка.'
+            return [null, errorMessage]
+        }
     }
 
     function useMe() {
         return useRequest<any, TUser>({
-            url: 'api/v1/authenticated_users',
+            url: 'users/me',
             method: HttpMethods.GET,
         })
     }
 
-    function useLogin(options: TLoginModel) {
-        return useRequest<TLoginModel, TUser>({
-            url: 'auth/token/login',
-            method: HttpMethods.POST,
-            data: options
-        })
-    }
-
-    function useRegistration(options: TRegistrationModel) {
-        return useRequest<TRegistrationModel, TUser>({
-            url: 'api/v1/auth/users/',
-            method: HttpMethods.POST,
-            data: options
-        })
-    }
-
-    function useDoctors(options: ModelOptionsType<TDoctor>) {
-        return useRequest<ModelOptionsType<TDoctor>, TDoctor[]>({
-            url: 'api/v1/doctors/',
+    function useDoctors(options: ModelOptionsType<TUser>) {
+        return useRequest<ModelOptionsType<TUser>, TUser[]>({
+            url: 'doctors',
             method: HttpMethods.GET,
             data: options,
         })
     }
 
     function useDoctor(doctorId: number) {
-        return useRequest<any, TDoctor>({
-            url: `api/v1/doctors/${doctorId}`,
+        return useRequest<any, TUser>({
+            url: `doctors/${doctorId}`,
             method: HttpMethods.GET,
         })
     }
 
-    function useSpecialties(options: ModelOptionsType<TSpecialty>) {
-        return useRequest<ModelOptionsType<TSpecialty>, TSpecialty[]>({
-            url: 'api/v1/specialities/',
+    function useSpecialities(options: ModelOptionsType<TSpeciality>) {
+        return useRequest<ModelOptionsType<TSpeciality>, TSpeciality[]>({
+            url: 'doctors/specialities',
             method: HttpMethods.GET,
-            data: options
         })
     }
 
-    function useSpecialty(specialtyId: number) {
-        return useRequest<any, TSpecialty>({
-            url: `api/v1/specialities/${specialtyId}`,
+    function useSpeciality(specialtyId: number) {
+        return useRequest<any, TSpeciality>({
+            url: `doctors/specialities/${specialtyId}`,
             method: HttpMethods.GET
         })
     }
 
-    function useReviews(options: ModelOptionsType<TReview>) {
-        return useRequest<ModelOptionsType<TReview>, TReview[]>({
-            url: 'api/v1/reviews/',
+    function useMeetings(options: ModelOptionsType<TMeeting>) {
+        return useRequest<ModelOptionsType<TMeeting>, TMeeting[]>({
+            url: 'meetings/',
             method: HttpMethods.GET,
             data: options
         })
     }
+
+
+    function usePatientDiagnosis(options: {patientId: number}) {
+        return useRequest<any, TDiagnosis[]>({
+            url: `patients/${options.patientId}/diagnosis`,
+            method: HttpMethods.GET,
+        })
+    }
+
+    
+    function usePatients(options: ModelOptionsType<TPatient>) {
+        return useRequest<ModelOptionsType<TPatient>, TPatient[]>({
+            url: `patients`,
+            method: HttpMethods.GET,
+        })
+    }
+
+    function useDoctorMeetings(doctorId?: number) {
+        return useRequest<any, TMeeting[]>({
+            url: !!doctorId ? 'doctors/meetings' : `doctors/${doctorId}/meetings`,
+            method: HttpMethods.GET,
+        })
+    }
+
+    function useDoctorVisits(doctorId?: number) {
+        return useRequest<any, TMeeting[]>({
+            url: !!doctorId ? 'doctors/visits' : `doctors/${doctorId}/visits`,
+            method: HttpMethods.GET,
+        })
+    }
+
+    function useDoctorPatients(doctorId?: number) {
+        return useRequest<any, TMeeting[]>({
+            url: !!doctorId ? 'doctors/patients' : `doctors/${doctorId}/patients`,
+            method: HttpMethods.GET,
+        })
+    }
+
+    async function createMeeting(options: TCreateMeeting) {
+        return await handledRequest<TCreateMeeting, TMeeting>({
+            url: `meetings/create`,
+            method: HttpMethods.POST,
+            data: options,
+        })
+    }
+
+    async function deleteMeeting(meetingId: number) {
+        return await handledRequest<any, TMeeting>({
+            url: `meetings/${meetingId}/delete`,
+            method: HttpMethods.DELETE,
+        })
+    }
+
+    async function editMeeting(meetingId: number, data: ModelOptionsType<TMeeting>) {
+        return await handledRequest<ModelOptionsType<TCreateMeeting>, TMeeting>({
+            url: `meetings/${meetingId}/delete`,
+            method: HttpMethods.PUT,
+            data: data,
+        })
+    }
+
+    async function addMeetingPatient(meetingId: number, patientId: number) {
+        return await handledRequest<any, TMeeting>({
+            url: `meetings/${meetingId}/patients/add`,
+            method: HttpMethods.PUT,
+            data: {
+                patient_id: patientId,
+            },
+        })
+    }
+
+    async function removeMeetingPatient(meetingId: number, patientId: number) {
+        return await handledRequest<any, TMeeting>({
+            url: `meetings/${meetingId}/patients/delete`,
+            method: HttpMethods.DELETE,
+            data: {
+                patient_id: patientId,
+            }
+        })
+    }
+
+    async function createPatient(options: TCreatePatient) {
+        return await handledRequest<TCreatePatient, TPatient>({
+            url: `patients/create`,
+            method: HttpMethods.POST,
+            data: options
+        })
+    }
+
+    async function removePatient(patientId: number) {
+        return await handledRequest<any, TPatient>({
+            url: `patients/${patientId}/delete`,
+            method: HttpMethods.DELETE,
+        })
+    }
+
+    
+
+
 
     return (
         <ApiContext.Provider value={{
             useMe,
             useDoctor,
             useDoctors,
-            useSpecialties,
-            useSpecialty,
-            useReviews,
+            useMeetings,
+            useSpecialities,
+            useSpeciality,
+            usePatientDiagnosis,
+            usePatients,
+            useDoctorMeetings,
+            useDoctorVisits,
+            useDoctorPatients,
+            createMeeting,
+            deleteMeeting,
+            editMeeting,
+            addMeetingPatient,
+            removeMeetingPatient,
+            createPatient,
+            removePatient,
             fetchApi,
         }}>
             {children}

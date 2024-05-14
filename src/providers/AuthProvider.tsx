@@ -6,6 +6,8 @@ import useAuthUser from 'react-auth-kit/hooks/useAuthUser';
 import useIsAuthenticated from 'react-auth-kit/hooks/useIsAuthenticated';
 import useAuthHeader from 'react-auth-kit/hooks/useAuthHeader';
 import { fetchApi, HttpMethods } from './ApiProvider';
+import ts from 'typescript';
+import { useEffect } from 'react';
 
 export function useAuth() {
     const signInHook = useSignIn();
@@ -14,13 +16,14 @@ export function useAuth() {
     const isAuthenticatedHook = useIsAuthenticated();
     const authHeaderHook = useAuthHeader();
 
-    const signIn = (token: string, user: TUser, refresh: string) => {
+    const signIn = (token: string, user: TUser) => {
+        user.photo = user.photo.replaceAll('\\', '/');
+
         return signInHook({
             auth: {
                 token: token,
                 type: 'Bearer'
             },
-            refresh: refresh,
             userState: user
         })
     }
@@ -29,41 +32,70 @@ export function useAuth() {
         return signOutHook();
     }
 
+    async function refreshUser() {
+        if (!authHeaderHook || !isAuthenticatedHook) {
+            return
+        }
+
+        const data = await fetchApi<any, any>({
+            url: 'users/me',
+            method: HttpMethods.GET,
+        })
+
+        if (!!data) {
+            signIn(
+                authHeaderHook.split(' ')[1],
+                data
+            )
+        }
+    }
+
     async function authorize(data: TLoginModel) {
-        const tokenData = await fetchApi<TLoginModel, any>({
-            url: 'auth/jwt/create',
+        const formData = new FormData()
+
+        Object.keys(data).forEach((key: any) => {
+            // @ts-ignore
+            formData.append(key, data[key])
+        })
+
+        const tokenData = await fetchApi<any, any>({
+            url: `users/token`,
             method: HttpMethods.POST,
-            data: data,
+            data: formData,
             headers: {}
         })
 
-        const authToken = tokenData.access;
-        const refreshToken = tokenData.refresh;
+        const authToken = tokenData.access_token;
 
         const userData = await fetchApi<any, TUser>({
-            url: 'auth/users/me',
+            url: 'users/me',
             method: HttpMethods.GET,
             headers: {
                 'Authorization': `Bearer ${authToken}`
             }
         })
 
-        return {authToken, userData, refreshToken}
+        return {authToken, userData}
     }
 
     async function registration(data: TRegistrationModel) {
         return await fetchApi<TRegistrationModel, TUser>({
-            url: 'auth/users/',
+            url: 'users/register',
             method: HttpMethods.POST,
             data: data
         })
     }
+
+    useEffect(() => {
+        refreshUser()
+    }, [])
 
     return {
         signIn,
         signOut,
         authorize,
         registration,
+        refreshUser,
         user: authUserHook,
         isAuthenticated: isAuthenticatedHook,
         token: authHeaderHook?.split(' ')?.[1],

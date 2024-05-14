@@ -37,69 +37,140 @@ export enum UserRoles {
     USER = 3,
 }
 
-export const User = yup.object({
-    id: yup.number()
-        .required(
-            'Поле ID не указано'
-        ),
+const genderField = yup.string()
+    .required('Поле пола пациента не указано.')
+    .oneOf(
+        ['male', 'female'],
+        'Указано неверное значение для пола.'
+    )
 
-    first_name: yup.string()
-        .required(
-            'Поле имени не указано.'
-        ),
+export type TDiagnosis = {
+    id: number,
+    name: string,
+}
 
-    last_name: yup.string().notRequired(),
-    
-    username: yup.string().required(
-        'Поле имени пользователя обязательно для заполнения.'
-    ),
+export type TSpeciality = {
+    id: number,
+    name: string,
+}
 
-    email: yup.string()
-        .required(
-            'Поле эл.почты не указано.'
-        )
-        .test(
-            'email-validation',
-            'Указана неверная эл. почта.',
-            emailTestFunction,
-        ),
+export type TUser = {
+    id: number,
+    first_name: string,
+    last_name: string,
+    surname?: string,
+    username: string,
+    password?: string,
+    photo: string,
+    date_joined: string | Date,
+    last_login?: string | Date,
+    speciality: TSpeciality,
+    email: string,
+    visits?: TVisit[],
+    meetings?: TMeeting[], 
+}
 
-    password: yup.string()
-        .required(
-            'Поле пароля пользователя не указано.'
-        ),
+export type TMedCard = {
+    id: number,
+    date_created: string | Date,
+    date_expires: string | Date,
+}
 
-    role: oneOfEnum<UserRoles>(
-        (UserRoles as any)
-    ),
-    
-    avatar: yup.string().notRequired(),
-    date_joined: yup.date().notRequired(),
-    
-    last_login: yup.date().notRequired(),
-})
+export type TInsuranceCompany = {
+    id: number,
+    name: string,
+}
 
-export const Specialty = yup.object({
-    id: yup.number().required(
-        'Поле ID не указано'
-    ),
+export type TInsurancePolicy = {
+    id: number,
+    date_created: string | Date,
+    date_expires: string | Date,
+    number: number,
+    company: TInsuranceCompany,
+}
 
+export type TPassport = {
+    id: number,
+    issued_by: string,
+    issued_date: string | Date,
+    first_name: string,
+    last_name: string,
+    surname?: string,
+    department_code: number,
+    gender: 'male' | 'female',
+    date_of_birth: string | Date,
+    birth_address: string,
+    serias_number: number,
+}
+
+
+export type TPatient = {
+    id: number,
+    first_name: string,
+    last_name: string,
+    surname?: string,
+    gender: 'male' | 'female',
+    address: string,
+    email: string,
+    med_card: TMedCard,
+    insurance_policy: TInsurancePolicy,
+    passport: TPassport,
+    date_of_birth: string | Date,
+}
+
+export type TVisit = {
+    id: number,
+    doctor: TUser,
+    patient: TPatient,
+    diagnosis: TDiagnosis,
+    status: 'closed' | 'opened' | 'not_came' | 'canceled' | 'rescheduled' | 'reopened',
+    date_created: string | Date,
+    date_to_visit: string | Date,
+}
+
+export type TMeeting = {
+    id: number,
+    name: string,
+    date_created: string | Date,
+    type: 'laboratory_test' | 'instrumental_diagnostics' | 'drug_therapy' | 'physiotherapy' | 'surgery',
+    doctor: TUser,
+    patients: TPatient[],
+    data: any
+}
+
+export const SpecialtyModel = yup.object({
     name: yup.string().required(
         'Поле названия специальности не указано.'
     )
 })
 
-export const Doctor = yup.object({
-    id: yup.number().required(
-        'Поле ID не указано'
-    ),
-    
-    user: User.required(
-        'Поле пользователя не указано.'
+export const InsuranceCompanyModel = yup.object({
+    name: yup.string().required(
+        'Поле название страховой компании не указано.'
+    )
+});
+
+export const PatientInsurancePolicyModel = yup.object({
+    date_created: yup.date().required(
+        'Поле создания мед. полиса не указано.'
     ),
 
-    specialty: Specialty.required(
-        'Специальность доктора не указана.'
+    date_expires: yup.date().required(
+        'Поле срока окончания действия мед. полиса не найдено.'
+    ),
+
+    number: yup.number().required(
+        'Номер мед. полиса не указан.'
+    ),
+
+    company: InsuranceCompanyModel.required(
+        'Поле страховой компании не указано.'
+    )
+})
+
+export const PatientPassportModel = yup.object({
+    issued_by: yup.string().required(
+        'Поле "выдан кем" не указано.'
     ),
 
     first_name: yup.string().required(
@@ -112,80 +183,115 @@ export const Doctor = yup.object({
 
     surname: yup.string().notRequired(),
 
-    description: yup.string()
-        .notRequired()
-        .max(256, 'Длина описания должна быть не более 256 символов.')
-    
-})
-
-export const Consultation = yup.object({
-    id: yup.number().required(
-        'Поле ID не было указано.'
+    issued_date: yup.date().required(
+        'Поле даты выдачи паспорта не указано.'
     ),
 
-    from_doctor: Doctor.required(
-        'Доктор не указан.'
+    department_code: yup.number().required(
+        'Поле кода подразделения не указано.'
     ),
 
-    to_user: User.required(
-        'Пользователь не указан.'
+    gender: genderField,
+
+    date_of_birth: yup.date().required(
+        'Поле даты рождения не указано.'
     ),
 
-    date_created: yup.date().required(
-        'Поле даты создания консультации не указано.'
+    birth_address: yup.string().required(
+        'Поле места рождения не указано.'
+    ),
+
+    serias_number: yup.number().required(
+        'Поле серии и номера паспорта не указано.'
     )
 })
 
-export const ConsulatationMessage = yup.object({
-    id: yup.number().required(
-        'Поле ID не было указано.'
+export const PatientModel = yup.object({
+    first_name: yup.string().required(
+        'Поле имени доктора не указано.'
     ),
 
-    from_user: User.required(
-        'Отправитель сообщения не был указан.'
+    last_name: yup.string().required(
+        'Поле фамилии доктора не указано.'
     ),
 
-    consulatation: Consultation.required(
-        'Консультация не была указана.'
+    surname: yup.string().notRequired(),
+
+    gender: genderField,
+
+    address: yup.string().required(
+        'Поле адреса проживания пациента не указано!'
     ),
 
-    message: yup.string().notRequired(),
-
-    attachments: yup.array(
-        yup.string()
-            .required()
-            .test(
-                'url-validation',
-                'Указана неверная ссылка на вложение.',
-                urlIsValid,
-            )
-    )
-})
-
-
-export const Review = yup.object({
-    id: yup.number().required(
-        'Поле ID не было указано.'
-    ),
-
-    from_user: User.required(
-        'Поле пользователя не указано.'
-    ),
-
-    to_doctor: Doctor.required(
-        'Поле доктора не указано.'
-    ),
-
-    rate: yup.number()
+    email: yup.string()
         .required(
-            'Поле оценки доктора не указано.'
+            'Поле эл. почты пациента не указано.'
         )
-        .min(1, 'Минимальная оценка - 1.')
-        .max(5, 'Максимальная оценка - 5'),
+        .test(
+            'email-validation',
+            'Указан неверный формат эл. почты!',
+            emailTestFunction,
+        ),
 
-    message: yup.string().notRequired()
+    insurance_policy: PatientInsurancePolicyModel.required(
+        'Мед. полис пациента не указан.'
+    ),
+
+    passport: PatientPassportModel.required(
+        'Паспортные данные пациента не указаны.'
+    ),
+
+    date_of_birth: yup.date().required(
+        'Поле даты рождения пациента не указано.'
+    )
 })
 
+export const DiagnosisModel = yup.object({
+    name: yup.string().required(
+        'Поле названия диагноза не найдено!'
+    )
+})
+
+export const VisitModel = yup.object({
+    date_to_visit: yup.date().required(
+        'Поле даты создания '
+    ),
+
+    diagnosis: DiagnosisModel.required(
+        'Диагноз пациента не указан.'
+    ),
+
+    status: yup.string().notRequired().oneOf(
+        [
+            'opened',  
+            'closed',  
+            'reopened',  
+            'canceled', 
+            'rescheduled',
+        ],
+        'Указан некорректный статус визита пациента.'
+    ),
+})
+
+export const MeetingModel = yup.object({
+    name: yup.string().required(
+        'Поле название мероприятия не указано.',
+    ),
+
+    type: yup.string()
+        .required(
+            'Поле типа мероприятия не указано.'
+        )
+        .oneOf(
+            [
+                'laboratory_test',
+                'instrumental_diagnostics',
+                'drug_therapy',
+                'physiotherapy',
+                'surgery',
+            ]
+        )
+})
 
 export const LoginModel = yup.object({
     username: yup.string()
@@ -202,16 +308,6 @@ export const RegistrationModel = yup.object({
         'Данное поле обязательно для заполнения.'
     ),
 
-    email: yup.string()
-        .required(
-            'Данное поле обязательно для заполнения.'
-        )
-        .test(
-            'email-validation',
-            'Указан неверный адрес эл.почты.',
-            emailTestFunction
-        ),
-
     first_name: yup.string()
         .required(
             'Поле имени не заполнено.'
@@ -223,11 +319,23 @@ export const RegistrationModel = yup.object({
         ),
 
     last_name: yup.string()
-        .notRequired()
+        .required(
+            'Поле фамилии не указано.'
+        )
         .test(
-            'fisrt-name-validation',
-            'Указано неверное имя.',
+            'last-name-validation',
+            'Указано неверная фамилия.',
             nameIsValid,
+        ),
+    
+    email: yup.string()
+        .required(
+            'Поле эл. почты не указано.'
+        )
+        .test(
+            'email-validation',
+            'Указан неверный формат эл. почты!',
+            emailTestFunction,
         ),
 
     password: yup.string()
@@ -248,17 +356,15 @@ export const RegistrationModel = yup.object({
             'password-mismatch',
             'Введенные пароли не совпадают.',
             passwordRepeatMismatchTest,
-        )
+        ),
+
+    speciality: SpecialtyModel.required(
+        'Поле специальности не указано.'
+    )
 })
 
-type TDoctor = yup.InferType<typeof Doctor>
-type TUser = yup.InferType<typeof User>
-type TSpecialty = yup.InferType<typeof Specialty>
-type TConsultation = yup.InferType<typeof Consultation>
-type TConsultationMessage = yup.InferType<typeof ConsulatationMessage>
-type TReview = yup.InferType<typeof Review>
 
-type TLoginModel = yup.InferType<typeof LoginModel>
-type TRegistrationModel = yup.InferType<typeof RegistrationModel>
-
-export type {TDoctor, TUser, TSpecialty, TConsultation, TConsultationMessage, TReview, TLoginModel, TRegistrationModel}
+export type TCreatePatient = yup.InferType<typeof PatientModel>
+export type TCreateMeeting = yup.InferType<typeof MeetingModel>
+export type TLoginModel = yup.InferType<typeof LoginModel>
+export type TRegistrationModel = yup.InferType<typeof RegistrationModel>

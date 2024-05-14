@@ -8,6 +8,7 @@ import createStore from 'react-auth-kit/createStore';
 import createRefresh from 'react-auth-kit/createRefresh';
 import AuthProvider from 'react-auth-kit/AuthProvider';
 
+
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
@@ -49,7 +50,6 @@ const store = createStore({
   authType: 'cookie',
   cookieDomain: 'localhost',
   cookieSecure: window.location.protocol === 'https:',
-  refresh: refresh,
 });
 
 root.render(

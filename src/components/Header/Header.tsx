@@ -1,6 +1,9 @@
-import { Avatar, Layout, Input, Button, Tabs } from 'antd';
-import './Header.less';
+import { Avatar, Layout, Input, Button, Tabs, Menu, MenuProps } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../providers/AuthProvider';
+
+
+import './Header.less';
 
 interface IPageHeader {
     onProfileClick?: () => any;
@@ -11,43 +14,36 @@ interface IPageHeader {
 export function PageHeader({onSearch, onProfileClick}: IPageHeader) {
     const navigate = useNavigate();
     const location = useLocation();
+    const {user} = useAuth();
+
+    const routes = {
+        "1": '/doctors',
+        "2": '/patients',
+        "3": '/visits',
+        "4": '/meetings',
+        "5": '/hospitalization',
+        "6": '/patients/new',
+    }
 
     const getCurrentActiveKey = () => {
-        switch (location.pathname) {
-            case '/doctors/':
-                return 1
+       const path = location.pathname;
 
-            case '/pacients/':
-                return 2
+        for (const [key, routePath] of Object.entries(routes)) {
+            if (path.startsWith(routePath)) {
+                return key;
+            }
+        }   
 
-            case '/meetings/':
-                return 3
-
-            case '/hospitalization/':
-                return 4
-
-            default:
-                return 0
-        }
+        return 0
     }
 
-    const handleTabChange = (tab: string) => {
-        switch (tab) {
-            case "1":
-                return navigate('/doctors/')
+    const handleMenuChange: MenuProps['onClick'] = ({key}) => {
+        // @ts-ignore
+        return navigate(routes[key]);
 
-            case "2":
-                return navigate('/pacients/')
-
-            case "3":
-                return navigate('/meetings/')
-            
-            case "4":
-                return navigate('/hospitalization/')
-        }
     }
 
-    const tabItems = [
+    const menuItems = [
         {
             label: 'Врачи',
             key: '1',
@@ -55,17 +51,33 @@ export function PageHeader({onSearch, onProfileClick}: IPageHeader) {
         },
         {
             label: 'Пациенты',
-            key: '2',
-            children: '',
+            key: '200',
+            children: [
+                {
+                    label: 'Регистрация пациента',
+                    key: '6',
+                    children: '',
+                },
+                {
+                    label: 'Список пациентов',
+                    key: '2',
+                    children: '',
+                }
+            ],
         },
         {
-            label: 'Мероприятия',
+            label: 'Запись',
             key: '3',
             children: '',
         },
         {
-            label: 'Госпитализации',
+            label: 'Мероприятия',
             key: '4',
+            children: '',
+        },
+        {
+            label: 'Госпитализации',
+            key: '5',
             children: '',
         },
     ]
@@ -95,11 +107,12 @@ export function PageHeader({onSearch, onProfileClick}: IPageHeader) {
                 <h3>CENTEK</h3>
             </div>
 
-            <Tabs
+            <Menu
+                mode='horizontal'
                 className='header-tabs'
                 activeKey={`${activeKey}`}
-                items={tabItems}
-                onChange={handleTabChange}
+                items={menuItems}
+                onClick={handleMenuChange}
             />
 
             <Input.Search 
@@ -112,10 +125,11 @@ export function PageHeader({onSearch, onProfileClick}: IPageHeader) {
 
             <div className='profile-button'>
                 <Avatar 
-                    size={40} 
+                    size={60}
+                    src={`http://localhost:8080/${user?.photo}`}
                     onClick={handleProfileClick}
                 >
-                    S
+                    {user?.first_name.at(0)}
                 </Avatar>
             </div>
         </Layout.Header>

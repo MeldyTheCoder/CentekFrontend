@@ -1,11 +1,11 @@
 import { ProfileLayout } from "../Layouts/ProfileLayout/ProfileLayout";
-import { Divider, Statistic, Col, Input, Button, DescriptionsProps, Descriptions } from "antd";
+import { Divider, Statistic, Col, Input, Button, DescriptionsProps, Descriptions, App } from "antd";
 import { CheckCircleOutlined, EditOutlined, LockOutlined, MailOutlined, ProfileOutlined, StarOutlined, UserOutlined } from "@ant-design/icons";
 import './ProfileEditor.less';
 import { useEffect, useState } from "react";
 import { TUser, UserRoles } from "../../Types";
 import { useAuth } from "../../providers/AuthProvider";
-import { useApiContext } from "../../providers/ApiProvider";
+import { HttpMethods, fetchApi, useApiContext } from "../../providers/ApiProvider";
 
 
 const userRoleString = (role: UserRoles) => {
@@ -20,10 +20,15 @@ const userRoleString = (role: UserRoles) => {
 
 
 export function ProfileEditor() {
-    const [firstName, setFirstName] = useState<string>('')
-    const [lastName, setLastName] = useState<string>('')
-    const [email, setEmail] = useState<string>('')
-    const { isAuthenticated, user } = useAuth()
+    const { isAuthenticated, user, refreshUser } = useAuth()
+    const [firstName, setFirstName] = useState<string>(user?.first_name || '');
+    const [lastName, setLastName] = useState<string>(user?.last_name ||'');
+    const [email, setEmail] = useState<string>('');
+
+    const [oldPassword, setOldPassword] = useState<string>('');
+    const [newPassword, setNewPassword] = useState<string>('');
+
+    const {notification} = App.useApp();
 
     const [selectedTab, setSelectedTab] = useState<string>('editor');
 
@@ -45,6 +50,35 @@ export function ProfileEditor() {
 
     const handleEmailChange = ({target}: any) => {
         setEmail(target.value);
+    }
+
+    const handleProfileUpdateSubmit = () => {
+        fetchApi<any, any>({
+            url: '/users/edit',
+            method: HttpMethods.POST,
+            data: {
+                first_name: firstName,
+                last_name: lastName,
+            }
+        })
+        .then((_: any) => {
+            refreshUser();
+
+            notification.success({
+                message: 'Успешно',
+                description: 'Ваш профиль был успешно обновлен!',
+                duration: 5,
+                placement: 'bottom',
+            })
+        })
+        .catch((error: any) => {
+            notification.error({
+                message: 'Ошибка',
+                description: error.response.data?.detail! || 'Произошла неизвестная ошибка.',
+                duration: 5,
+                placement: 'bottom',
+            })
+        })
     }
 
     const emailChangeDisabled = (): boolean => {
@@ -69,6 +103,46 @@ export function ProfileEditor() {
 
     const handleSearch = (value: string) => {
         console.log(value);
+    }
+
+    const handleOldPasswordChange = ({target}: any) => {
+        setOldPassword(target?.value);
+    }
+
+    const handleNewPasswordChange = ({target}: any) => {
+        setNewPassword(target?.value);
+    }
+
+    const handlePasswordChangeSubmit = () => {
+        console.log('Submit');
+
+        fetchApi<any, any>({
+            url: 'users/change-password',
+            method: HttpMethods.POST,
+            data: {
+                old_password: oldPassword,
+                new_password: newPassword,
+            }
+        })
+        .then((_: any) => {
+            notification.success({
+                message: 'Успешно',
+                description: 'Пароль был успешно сменен!',
+                duration: 5,
+                placement: 'bottom',
+            })
+
+            setOldPassword('');
+            setNewPassword('');
+        })
+        .catch((error: any) => {
+            notification.error({
+                message: 'Ошибка',
+                description: error.response.data?.detail! || 'Произошла неизвестная ошибка.',
+                duration: 5,
+                placement: 'bottom',
+            })
+        })
     }
 
     const editorContent = (
@@ -104,7 +178,7 @@ export function ProfileEditor() {
                 <Col sm={6}>
                     <Input
                         className="input"
-                        defaultValue={user?.first_name!}
+                        value={firstName}
                         onChange={handleFirstNameChange}
                         prefix={
                             <ProfileOutlined className="site-form-item-icon" />
@@ -116,7 +190,7 @@ export function ProfileEditor() {
                 <Col sm={6}>
                     <Input
                         className="input"
-                        defaultValue={user?.last_name!}
+                        value={lastName}
                         onChange={handleLastNameChange}
                         prefix={
                             <ProfileOutlined className="site-form-item-icon" />
@@ -125,7 +199,7 @@ export function ProfileEditor() {
                     />
                 </Col>
 
-                <Button type="primary">Сменить</Button>
+                <Button type="primary" onClick={handleProfileUpdateSubmit}>Сменить</Button>
             </div>
         </>
     )
@@ -146,7 +220,9 @@ export function ProfileEditor() {
                         autoComplete="off"
                         prefix={
                             <LockOutlined className="site-form-item-icon" />
-                        } 
+                        }
+                        value={oldPassword}
+                        onChange={handleOldPasswordChange}
                         placeholder="Старый пароль" 
                     />
                 </Col>
@@ -158,11 +234,19 @@ export function ProfileEditor() {
                         prefix={
                             <LockOutlined className="site-form-item-icon" />
                         } 
+                        value={newPassword}
+                        onChange={handleNewPasswordChange}
                         placeholder="Новый пароль" 
                     />
                 </Col>
 
-                <Button type="primary" disabled={!firstName}>Сменить</Button>
+                <Button 
+                    type="primary" 
+                    onClick={handlePasswordChangeSubmit} 
+                    disabled={!oldPassword || !newPassword}
+                >
+                    Сменить
+                </Button>
             </div>
         </>
     )
@@ -216,11 +300,6 @@ export function ProfileEditor() {
                             key: '2',
                             label: 'Дата последнего входа',
                             children: formatDate(user?.last_login!) || '-',
-                        },
-                        {
-                            key: '3',
-                            label: 'Роль',
-                            children: userRoleString(user?.role!),
                         },
                     ]}
                 />
