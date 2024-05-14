@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { AuthorizedLayout } from "../Layouts/AuthorizedLayout/AuthorizedLayout";
 import { Formik } from "formik";
 import { PatientModel, TCreatePatient } from "../../Types";
-import { Button, Collapse, DatePicker, Divider, Flex, Form, Input, Select, Space, Tabs } from "antd";
+import { App, Button, Collapse, DatePicker, Divider, Flex, Form, Input, Select, Space, Tabs } from "antd";
 import dayjs from "dayjs";
 import { useApiContext } from "../../providers/ApiProvider";
 import './NewPatient.less';
@@ -21,12 +21,21 @@ export function NewPatient() {
     const [selectedTab, setSelectedTab] = useState<string>('general');
     const [form] = Form.useForm();
     const {createPatient} = useApiContext();
+    const {notification} = App.useApp();
 
     const handleSubmit = (values: TCreatePatient) => {
         console.log(values);
 
         createPatient(values)
-        .then((response: any) => console.log(response))
+        .then((_: any) => {
+            notification.success({
+                message: 'Инфорамация',
+                description: 'Пациент был успешно зарегистрирован!',
+                duration: 5,
+                placement: 'bottom',
+            })
+            return navigate('/patients/')
+        })
         .catch((error: any) => console.log(error))
     }
 
